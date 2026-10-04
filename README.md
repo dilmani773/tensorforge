@@ -111,6 +111,22 @@ hosted server so jobs survive restarts. A job that was running when the service 
 | `JOB_RETENTION_HOURS` | 24 |
 | `JOB_CHUNK_SIZE` | 32 |
 
+## Demo dashboard
+
+Open `http://localhost:8000/demo` (or `/`) after starting the container. Paste the API key in the top bar.
+You can route one ticket, try sample tickets in each language, upload a CSV (up to 100 rows run at once,
+larger files run as a background job up to 5,000 rows, with accuracy if the file has a `category` column),
+and see the validation scores of the shipped model. The page holds no key; it is kept only in the browser tab.
+
+## Judge simulator
+
+Tests a running server end to end the way an automated grader would (auth, error codes, schemas,
+batch order, a large async job with paging, `/health` latency during the job):
+
+```powershell
+python scripts/judge_sim.py --url http://localhost:8765 --key dev-key --job-size 5000
+```
+
 ## Current model
 
 TF-IDF + `multilingual-e5-base` ensemble, served with ONNX Runtime on CPU. Each ticket is encoded on its

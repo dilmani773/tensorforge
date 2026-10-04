@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config
@@ -153,6 +153,31 @@ def validation_failed(details):
 
 
 # ---------------------------------------------------------------- routes
+# ---------------------------------------------------------------- demo dashboard (public page, no key inside)
+FRONTEND_PAGE = config.BASE_DIR / "frontend" / "index.html"
+
+
+@app.get("/")
+async def root():
+    return RedirectResponse("/demo", status_code=307)
+
+
+@app.get("/demo")
+async def demo_page():
+    if not FRONTEND_PAGE.exists():
+        raise ApiError(404, "not_found", "Route not found.")
+    return FileResponse(FRONTEND_PAGE, media_type="text/html")
+
+
+@app.get("/demo/metrics")
+async def demo_metrics():
+    """Validation metrics of the shipped model, for the dashboard. Contains no ticket data."""
+    path = config.MODEL_PATH.parent / "metrics.json"
+    if not path.exists():
+        raise ApiError(404, "not_found", "No metrics file for this model.")
+    return JSONResponse(json.loads(path.read_text(encoding="utf-8")))
+
+
 @app.get("/health")
 async def health():
     if S.predictor is None:

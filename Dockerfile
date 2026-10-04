@@ -13,6 +13,7 @@ COPY src/__init__.py src/__init__.py
 COPY src/api/ src/api/
 COPY src/model/ src/model/
 COPY models/ models/
+COPY frontend/ frontend/
 
 RUN useradd -m svc && mkdir -p /app/runtime && chown -R svc /app/runtime
 USER svc

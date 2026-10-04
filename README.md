@@ -50,13 +50,23 @@ determinism between `/predict`, `/predict/batch` and jobs.
 
 ## Train
 
-Put `train.csv` and `validation.csv` from the organisers in `data/raw/` (not committed), then from the repo root:
+Put `train.csv` and `validation.csv` from the organisers in `data/raw/` (not committed).
 
-```bash
-python -m src.training.train_baseline
+1. **Encoder.** Run `notebooks/02_train_encoder.ipynb` on a Kaggle GPU. It fine-tunes
+   `intfloat/multilingual-e5-base` with three heads (category, secondary, urgent), evaluates on
+   validation every epoch (Run 1), retrains on train + validation (Run 2) and exports ONNX int8.
+   Download `encoder_multilingual-e5-base.zip` from the notebook output.
+2. **Ensemble.** From the repo root:
+
+```powershell
+python -m src.training.build_ensemble --encoder C:\path\to\encoder_multilingual-e5-base.zip
 ```
 
-This writes `models/model.joblib` and `models/metrics.json`.
+This splits the ONNX model into parts under GitHub's file limit (`models/encoder/`), tunes blend
+weights, thresholds and temperature on validation, refits TF-IDF on train + validation, and writes
+`models/model.joblib` and `models/metrics.json`.
+
+The TF-IDF-only baseline can still be trained with `python -m src.training.train_baseline`.
 
 ## Layout
 
@@ -80,8 +90,8 @@ This writes `models/model.joblib` and `models/metrics.json`.
 
 ## Model version
 
-`model_version` is `<tag>+<first 8 hex of the artifact's SHA-256>`, so it always points at an exact
-file in `models/`. It is identical across `/health`, `/predict`, `/predict/batch` and jobs.
+`model_version` is `<tag>+<first 8 hex of a SHA-256>` over `models/model.joblib`, the ONNX model and the
+tokenizer, so it always points at an exact set of files in `models/`. It is identical across `/health`, `/predict`, `/predict/batch` and jobs.
 
 ## needs_human_review
 
@@ -103,5 +113,6 @@ hosted server so jobs survive restarts. A job that was running when the service 
 
 ## Current model
 
-Baseline `tfidf-lr-0.1` (char + word TF-IDF, three logistic regression heads). Placeholder until the
-multilingual transformer is trained. See `models/metrics.json`.
+TF-IDF + `multilingual-e5-base` ensemble, served with ONNX Runtime on CPU. Each ticket is encoded on its
+own (no padding), so a ticket gets identical output from `/predict`, `/predict/batch` and jobs.
+See `models/metrics.json` for the TF-IDF vs encoder vs ensemble comparison on validation.

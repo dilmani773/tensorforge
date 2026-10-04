@@ -1,7 +1,7 @@
 """Model wrapper. Every backend returns raw probabilities; postprocess() applies the contract rules.
 
 Artifact format (joblib dict):
-  kind              "tfidf_lr" (baseline) or "onnx_encoder" (added later)
+  kind              "tfidf_lr" (baseline) or "ensemble" (TF-IDF + ONNX encoder)
   version           human version tag, e.g. "tfidf-lr-0.1"
   cat_classes       list of categories in probability column order
   sec_classes       list of secondary labels incl. "none"
@@ -10,8 +10,13 @@ Artifact format (joblib dict):
   urgent_threshold  min prob for is_urgent
   review_threshold  confidence below this sets needs_human_review
   temperature       softmax temperature for the category head (calibration)
+  ensemble only:
+  encoder_dir       folder (relative to the joblib) with model.onnx or model.onnx.partNN, tokenizer.json, meta.json
+  w_cat/w_sec/w_urg weight of the encoder in each blended head (TF-IDF gets 1 - w)
 """
 import hashlib
+import json
+import os
 from pathlib import Path
 
 import joblib
@@ -51,6 +56,77 @@ class TfidfBackend:
         return p_cat, p_sec, p_urg
 
 
+class OnnxEncoder:
+    """Multilingual encoder exported to ONNX int8. The model file may be split into parts
+    (model.onnx.part00, part01, ...) to stay under GitHub's 100 MB file limit; they are joined in memory."""
+
+    def __init__(self, folder: Path):
+        import onnxruntime as ort
+        from tokenizers import Tokenizer
+
+        self.meta = json.loads((folder / "meta.json").read_text(encoding="utf-8"))
+        single = folder / "model.onnx"
+        parts = sorted(folder.glob("model.onnx.part*"))
+        if single.exists():
+            model_bytes = single.read_bytes()
+        elif parts:
+            model_bytes = b"".join(p.read_bytes() for p in parts)
+        else:
+            raise FileNotFoundError(f"no model.onnx or model.onnx.part* in {folder}")
+        expected = self.meta.get("onnx_sha256")
+        digest = hashlib.sha256(model_bytes).hexdigest()
+        if expected and digest != expected:
+            raise ValueError("ONNX model parts are incomplete or corrupted (sha256 mismatch)")
+        tok_bytes = (folder / "tokenizer.json").read_bytes()
+        self.fingerprint = hashlib.sha256(model_bytes + tok_bytes).hexdigest()
+
+        opts = ort.SessionOptions()
+        opts.intra_op_num_threads = int(os.environ.get("ORT_THREADS", "0"))  # 0 = all cores
+        opts.inter_op_num_threads = 1
+        self.session = ort.InferenceSession(model_bytes, sess_options=opts, providers=["CPUExecutionProvider"])
+        del model_bytes
+
+        self.tokenizer = Tokenizer.from_str(tok_bytes.decode("utf-8"))
+        self.tokenizer.enable_truncation(int(self.meta["max_len"]))
+        self.tokenizer.no_padding()
+        self.cat_classes = list(self.meta["cat_classes"])
+        self.sec_classes = list(self.meta["sec_classes"])
+
+    def probs(self, texts):
+        # One ticket per run: no padding, so a ticket gets identical scores in /predict, batches and jobs.
+        pc, ps, pu = [], [], []
+        for enc in self.tokenizer.encode_batch(list(texts)):
+            ids = np.array([enc.ids], dtype=np.int64)
+            mask = np.array([enc.attention_mask], dtype=np.int64)
+            c, s, u = self.session.run(["p_cat", "p_sec", "p_urg"], {"input_ids": ids, "attention_mask": mask})
+            pc.append(c[0]); ps.append(s[0]); pu.append(float(np.ravel(u)[0]))
+        return np.array(pc), np.array(ps), np.array(pu)
+
+
+def _reorder(p, src_classes, dst_classes):
+    idx = [src_classes.index(c) for c in dst_classes]
+    return p[:, idx]
+
+
+class EnsembleBackend:
+    """Weighted average of TF-IDF and encoder probabilities, per head."""
+
+    def __init__(self, art, base_dir: Path | None, encoder: OnnxEncoder | None = None):
+        self.tfidf = TfidfBackend(art)
+        self.encoder = encoder or OnnxEncoder(Path(base_dir) / art["encoder_dir"])
+        self.cat_classes = list(art["cat_classes"])
+        self.sec_classes = list(art["sec_classes"])
+        self.w = (float(art["w_cat"]), float(art["w_sec"]), float(art["w_urg"]))
+
+    def probs(self, texts):
+        tc, ts, tu = self.tfidf.probs(texts)
+        ec, es, eu = self.encoder.probs(texts)
+        ec = _reorder(ec, self.encoder.cat_classes, self.cat_classes)
+        es = _reorder(es, self.encoder.sec_classes, self.sec_classes)
+        wc, ws, wu = self.w
+        return wc * ec + (1 - wc) * tc, ws * es + (1 - ws) * ts, wu * eu + (1 - wu) * tu
+
+
 BACKENDS = {"tfidf_lr": TfidfBackend}
 
 
@@ -58,7 +134,10 @@ class Predictor:
     def __init__(self, path: Path | None = None, art: dict | None = None):
         if art is None:
             art = joblib.load(path)
-        self.backend = BACKENDS[art["kind"]](art)
+        if art["kind"] == "ensemble":
+            self.backend = EnsembleBackend(art, Path(path).parent if path else None, encoder=art.get("_encoder"))
+        else:
+            self.backend = BACKENDS[art["kind"]](art)
         self.cat_classes = list(art["cat_classes"])
         self.sec_classes = list(art["sec_classes"])
         self.allowed_pairs = {tuple(p) for p in art["allowed_pairs"]}
@@ -66,7 +145,13 @@ class Predictor:
         self.urgent_threshold = float(art["urgent_threshold"])
         self.review_threshold = float(art["review_threshold"])
         self.temperature = float(art.get("temperature", 1.0))
-        self.version = f'{art["version"]}+{_file_hash(path)}' if path else art["version"]
+        if path:
+            h = _file_hash(path)
+            if art["kind"] == "ensemble":  # cover the encoder files too
+                h = hashlib.sha256((h + self.backend.encoder.fingerprint).encode()).hexdigest()[:8]
+            self.version = f'{art["version"]}+{h}'
+        else:
+            self.version = art["version"]
 
     def predict(self, tickets):
         """tickets: list of clean dicts with channel, subject, text and optional ticket_id."""

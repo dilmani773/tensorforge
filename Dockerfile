@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/__init__.py src/__init__.py
 COPY src/api/ src/api/
 COPY src/model/ src/model/
-COPY models/model.joblib models/model.joblib
+COPY models/ models/
 
 RUN useradd -m svc && mkdir -p /app/runtime && chown -R svc /app/runtime
 USER svc

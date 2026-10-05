@@ -10,13 +10,19 @@ Artifact format (joblib dict):
   urgent_threshold  min prob for is_urgent
   review_threshold  confidence below this sets needs_human_review
   temperature       softmax temperature for the category head (calibration)
-  ensemble only:
+  "ensemble" only (one encoder):
   encoder_dir       folder (relative to the joblib) with model.onnx or model.onnx.partNN, tokenizer.json, meta.json
   w_cat/w_sec/w_urg weight of the encoder in each blended head (TF-IDF gets 1 - w)
+  "multi_ensemble" (TF-IDF + any number of encoders, language-aware category weights):
+  encoders          [{"name": ..., "dir": "encoders/<name>"}, ...]
+  lang_vec/lang_clf char n-gram classifier: english vs roman for Latin-script text
+  w_cat             {group: {source: weight}} for groups native / english / roman; sources = "tfidf" + encoder names
+  w_sec, w_urg      {source: weight} (same for every group)
 """
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 import joblib
@@ -127,6 +133,65 @@ class EnsembleBackend:
         return wc * ec + (1 - wc) * tc, ws * es + (1 - ws) * ts, wu * eu + (1 - wu) * tu
 
 
+NATIVE_SCRIPT = re.compile(r"[\u0D80-\u0DFF\u0B80-\u0BFF]")  # Sinhala, Tamil
+GROUPS = ("native", "english", "roman")
+
+
+class LanguageGrouper:
+    """Text-only language group: native script (si/ta/mixed), English, or romanised (Singlish/Tanglish).
+    The API never receives a language field, so this is all we can use."""
+
+    def __init__(self, vec, clf):
+        self.vec, self.clf = vec, clf
+
+    def groups(self, texts):
+        out = np.empty(len(texts), dtype=object)
+        latin = [i for i, t in enumerate(texts) if not NATIVE_SCRIPT.search(t)]
+        out[:] = "native"
+        if latin:
+            out[latin] = self.clf.predict(self.vec.transform([texts[i] for i in latin]))
+        return out
+
+
+class MultiEnsembleBackend:
+    """TF-IDF + several encoders. Category weights depend on the detected language group."""
+
+    def __init__(self, art, base_dir: Path | None, encoders: dict | None = None):
+        self.tfidf = TfidfBackend(art)
+        self.cat_classes = list(art["cat_classes"])
+        self.sec_classes = list(art["sec_classes"])
+        self.encoders = encoders or {e["name"]: OnnxEncoder(Path(base_dir) / e["dir"]) for e in art["encoders"]}
+        self.grouper = LanguageGrouper(art["lang_vec"], art["lang_clf"])
+        self.w_cat, self.w_sec, self.w_urg = art["w_cat"], art["w_sec"], art["w_urg"]
+
+    @property
+    def fingerprint(self):
+        return hashlib.sha256("".join(e.fingerprint for _, e in sorted(self.encoders.items())).encode()).hexdigest()
+
+    def source_probs(self, texts):
+        """Per-source probabilities, all in the artifact's class order."""
+        out = {"tfidf": self.tfidf.probs(texts)}
+        for name, enc in self.encoders.items():
+            c, s, u = enc.probs(texts)
+            out[name] = (_reorder(c, enc.cat_classes, self.cat_classes), _reorder(s, enc.sec_classes, self.sec_classes), u)
+        return out
+
+    def combine(self, src, groups):
+        n = len(groups)
+        p_cat = np.zeros((n, len(self.cat_classes)))
+        for g in GROUPS:
+            rows = groups == g
+            if rows.any():
+                for name, w in self.w_cat[g].items():
+                    p_cat[rows] += w * src[name][0][rows]
+        p_sec = sum(w * src[name][1] for name, w in self.w_sec.items())
+        p_urg = sum(w * src[name][2] for name, w in self.w_urg.items())
+        return p_cat, p_sec, p_urg
+
+    def probs(self, texts):
+        return self.combine(self.source_probs(texts), self.grouper.groups(list(texts)))
+
+
 BACKENDS = {"tfidf_lr": TfidfBackend}
 
 
@@ -136,6 +201,8 @@ class Predictor:
             art = joblib.load(path)
         if art["kind"] == "ensemble":
             self.backend = EnsembleBackend(art, Path(path).parent if path else None, encoder=art.get("_encoder"))
+        elif art["kind"] == "multi_ensemble":
+            self.backend = MultiEnsembleBackend(art, Path(path).parent if path else None, encoders=art.get("_encoders"))
         else:
             self.backend = BACKENDS[art["kind"]](art)
         self.cat_classes = list(art["cat_classes"])
@@ -149,6 +216,8 @@ class Predictor:
             h = _file_hash(path)
             if art["kind"] == "ensemble":  # cover the encoder files too
                 h = hashlib.sha256((h + self.backend.encoder.fingerprint).encode()).hexdigest()[:8]
+            elif art["kind"] == "multi_ensemble":
+                h = hashlib.sha256((h + self.backend.fingerprint).encode()).hexdigest()[:8]
             self.version = f'{art["version"]}+{h}'
         else:
             self.version = art["version"]

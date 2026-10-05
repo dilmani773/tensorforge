@@ -56,15 +56,17 @@ Put `train.csv` and `validation.csv` from the organisers in `data/raw/` (not com
    `intfloat/multilingual-e5-base` with three heads (category, secondary, urgent), evaluates on
    validation every epoch (Run 1), retrains on train + validation (Run 2) and exports ONNX int8.
    Download `encoder_multilingual-e5-base.zip` from the notebook output.
-2. **Ensemble.** From the repo root:
+2. **Ensemble.** From the repo root, with one or more encoder zips:
 
 ```powershell
-python -m src.training.build_ensemble --encoder C:\path\to\encoder_multilingual-e5-base.zip
+python -m src.training.build_ensemble --encoder e5b=C:\path\encoder_multilingual-e5-base.zip --encoder xlmr=C:\path\encoder_xlm-roberta-large.zip
 ```
 
-This splits the ONNX model into parts under GitHub's file limit (`models/encoder/`), tunes blend
-weights, thresholds and temperature on validation, refits TF-IDF on train + validation, and writes
-`models/model.joblib` and `models/metrics.json`.
+This splits each ONNX model into parts under GitHub's file limit (`models/encoders/<name>/`), trains a
+text-only language-group detector (native script / English / romanised), tunes per-group category
+weights plus secondary and urgent weights, temperature and thresholds on validation, reports an honest
+nested-CV estimate, refits TF-IDF and the detector on train + validation, and writes `models/model.joblib`
+and `models/metrics.json`. See `docs/MODEL_HANDOFF.md` for what each encoder zip must contain.
 
 The TF-IDF-only baseline can still be trained with `python -m src.training.train_baseline`.
 

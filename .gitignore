@@ -17,3 +17,8 @@ models/**/*.safetensors
 models/**/*.bin
 models/**/*.onnx
 models/**/*.pt
+
+# frontend build artifacts
+node_modules/
+frontend/dist/
+frontend/vite-app/dist/

@@ -205,7 +205,19 @@ footer.wrap{color:var(--ink-2);font-size:.85rem;padding:0 20px 40px}
 </main>
 <footer class="wrap">The model runs on this server. Ticket text is not stored after the response is sent, except for background jobs, which are deleted after 24 hours.</footer>
 
-<script>
+<script type="module">
+  import {
+    healthCheck,
+    predictTicket,
+    predictBatch,
+    createBatchJob,
+    getBatchJob,
+    getBatchResults,
+    getDemoMetrics,
+    setApiKey,
+    getApiKey,
+  } from './services/index.js';
+
 (() => {
   const $ = id => document.getElementById(id);
   const TEAMS = {payment_refund:"Payments & Refunds",ride_trip_issue:"Ride Operations",lost_item:"Lost & Found",
@@ -225,27 +237,16 @@ footer.wrap{color:var(--ink-2);font-size:.85rem;padding:0 20px 40px}
 
   // ---------- key (kept for this tab only)
   const keyIn = $("key");
-  try { keyIn.value = sessionStorage.getItem("tf_key") || ""; } catch (e) {}
-  keyIn.addEventListener("input", () => { try { sessionStorage.setItem("tf_key", keyIn.value.trim()); } catch (e) {} });
-  const headers = () => ({"Content-Type":"application/json","X-API-Key":keyIn.value.trim()});
-
-  async function api(path, opts = {}) {
-    const r = await fetch(path, opts);
-    let body = null;
-    try { body = await r.json(); } catch (e) {}
-    if (!r.ok) {
-      const msg = body && body.error ? body.error.message : `Request failed with status ${r.status}.`;
-      const hint = r.status === 401 ? " Check the API key at the top of the page." : "";
-      const err = new Error(msg + hint); err.status = r.status; err.retryAfter = r.headers.get("Retry-After"); throw err;
-    }
-    return {body, headers: r.headers, status: r.status};
-  }
+  try { keyIn.value = getApiKey(); } catch (e) {}
+  keyIn.addEventListener("input", () => {
+    setApiKey(keyIn.value.trim());
+  });
 
   // ---------- health
   async function health() {
     const el = $("health");
     try {
-      const {body} = await api("/health");
+      const body = await healthCheck();
       el.textContent = "Model ready"; el.className = "status ok"; el.title = body.model_version;
       $("slipver").textContent = body.model_version;
     } catch (e) {
@@ -280,8 +281,7 @@ footer.wrap{color:var(--ink-2);font-size:.85rem;padding:0 20px 40px}
     const btn = $("go"); btn.disabled = true; btn.textContent = "Routing";
     const t0 = performance.now();
     try {
-      const {body: p} = await api("/predict", {method:"POST", headers:headers(),
-        body: JSON.stringify({ticket_id:"demo-" + Date.now(), channel, subject:$("subject").value, text})});
+      const p = await predictTicket({ticket_id:"demo-" + Date.now(), channel, subject:$("subject").value, text});
       $("took").textContent = `Answered in ${Math.round(performance.now() - t0)} ms`;
       renderSlip(p);
     } catch (e) { showErr("err1", e.message); }
@@ -353,7 +353,7 @@ footer.wrap{color:var(--ink-2);font-size:.85rem;padding:0 20px 40px}
       let preds;
       if (tickets.length <= 100) {
         progress(.3, `Routing ${tickets.length} tickets`);
-        preds = (await api("/predict/batch", {method:"POST", headers:headers(), body:JSON.stringify({tickets})})).body.predictions;
+        preds = (await predictBatch(tickets)).predictions;
       } else {
         preds = await runJob(tickets);
       }
@@ -369,18 +369,17 @@ footer.wrap{color:var(--ink-2);font-size:.85rem;padding:0 20px 40px}
 
   async function runJob(tickets) {
     progress(.02, `Uploading ${tickets.length} tickets`);
-    const {body: job} = await api("/batch/jobs", {method:"POST", headers:{...headers(), "Idempotency-Key": "demo-" + Date.now()},
-      body: JSON.stringify({tickets})});
+    const job = await createBatchJob(tickets, { "Idempotency-Key": "demo-" + Date.now() });
     let st = job;
     while (st.status === "queued" || st.status === "running") {
       progress(Math.max(.03, st.processed / st.total), `${st.status === "queued" ? "Waiting in queue" : "Routing"}: ${st.processed} of ${st.total}`);
       await sleep(1500);
-      st = (await api(`/batch/jobs/${job.job_id}`, {headers:headers()})).body;
+      st = await getBatchJob(job.job_id);
     }
     if (st.status !== "succeeded") throw new Error(`The job ended with status ${st.status}${st.error ? ": " + st.error.message : ""}.`);
     const out = []; let offset = 0;
     while (offset !== null) {
-      const {body: page} = await api(`/batch/jobs/${job.job_id}/results?offset=${offset}&limit=1000`, {headers:headers()});
+      const page = await getBatchResults(job.job_id, { offset, limit: 1000 });
       out.push(...page.predictions); offset = page.next_offset;
     }
     return out;
@@ -432,7 +431,7 @@ footer.wrap{color:var(--ink-2);font-size:.85rem;padding:0 20px 40px}
   async function metrics() {
     const box = $("metrics");
     try {
-      const {body: m} = await api("/demo/metrics");
+      const m = await getDemoMetrics();
       box.replaceChildren();
       const cmp = m.category_comparison_on_validation;
       const pct = v => (v * 100).toFixed(1) + "%";

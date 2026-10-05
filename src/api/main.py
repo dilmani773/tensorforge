@@ -13,7 +13,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config
@@ -154,19 +156,36 @@ def validation_failed(details):
 
 # ---------------------------------------------------------------- routes
 # ---------------------------------------------------------------- demo dashboard (public page, no key inside)
-FRONTEND_PAGE = config.BASE_DIR / "frontend" / "index.html"
+FRONTEND_DIR = config.BASE_DIR / "frontend"
+FRONTEND_PAGE = FRONTEND_DIR / "index.html"
+# The page is served from this same server, so its API calls must go to this origin
+# (frontend/services/api/client.js reads these globals first).
+SAME_ORIGIN = ('<script>window.__TENSORFORGE_API_BASE_URL__ = window.location.origin;'
+               'window.__TENSORFORGE_API_MODE__ = "real";</script>')
 
 
 @app.get("/")
 async def root():
-    return RedirectResponse("/demo", status_code=307)
+    return RedirectResponse("/demo/", status_code=307)
 
 
 @app.get("/demo")
+async def demo_redirect():
+    # trailing slash so the page's relative imports (./services/...) resolve under /demo/
+    return RedirectResponse("/demo/", status_code=307)
+
+
+@app.get("/demo/")
 async def demo_page():
     if not FRONTEND_PAGE.exists():
         raise ApiError(404, "not_found", "Route not found.")
-    return FileResponse(FRONTEND_PAGE, media_type="text/html")
+    html = FRONTEND_PAGE.read_text(encoding="utf-8")
+    html = html.replace("</head>", SAME_ORIGIN + "</head>", 1) if "</head>" in html else SAME_ORIGIN + html
+    return HTMLResponse(html)
+
+
+if (FRONTEND_DIR / "services").is_dir():
+    app.mount("/demo/services", StaticFiles(directory=FRONTEND_DIR / "services"), name="demo-services")
 
 
 @app.get("/demo/metrics")
@@ -288,3 +307,15 @@ async def job_results(job_id: str, request: Request):
     nxt = offset + limit if offset + limit < total else None
     return {"job_id": job_id, "status": "succeeded", "total": total, "offset": offset, "limit": limit,
             "next_offset": nxt, "model_version": row["model_version"], "predictions": page}
+
+
+# ---------------------------------------------------------------- CORS (browser frontends on other origins)
+# Requests without an Origin header (curl, the judges' harness) are not affected.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.cors_origins(),
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-API-Key", "Authorization", "Idempotency-Key", "X-Request-ID"],
+    expose_headers=["Retry-After", "Location", "X-Request-ID"],
+    max_age=600,
+)

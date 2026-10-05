@@ -27,3 +27,13 @@ def api_key() -> str | None:
     """Read the expected key at call time. Empty or missing means the service refuses."""
     key = os.environ.get("API_KEY", "")
     return key if key.strip() else None
+
+
+DEFAULT_CORS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173"
+
+
+def cors_origins() -> list[str]:
+    """Browser origins allowed to call the API (comma separated, "*" for any).
+    Set CORS_ORIGINS on the server to the hosted frontend's address, e.g. https://tensorforge.vercel.app"""
+    raw = os.environ.get("CORS_ORIGINS", DEFAULT_CORS)
+    return [o.strip().rstrip("/") for o in raw.split(",") if o.strip()]

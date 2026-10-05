@@ -13,6 +13,7 @@ services:
       API_KEY: ${API_KEY:?set API_KEY in .env}
       ORT_THREADS: ${ORT_THREADS:-0}          # 0 = use every core
       JOB_RETENTION_HOURS: ${JOB_RETENTION_HOURS:-24}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}  # add the hosted frontend URL
     volumes:
       - jobs:/app/runtime                     # async jobs survive restarts and image rebuilds
     expose:

@@ -328,3 +328,33 @@ def test_restart_marks_running_as_interrupted(client):
     check("batch_job_status", r.json())
     assert r.json()["status"] == "failed" and r.json()["error"]["code"] == "interrupted"
     assert_error(client.get("/batch/jobs/crash-1/results", headers=H), 409)
+
+# ------------------------------------------------------------------ CORS and demo page
+def test_cors_preflight_for_allowed_origin(client):
+    r = client.options("/predict", headers={"Origin": "http://localhost:5173", "Access-Control-Request-Method": "POST",
+                                            "Access-Control-Request-Headers": "content-type,x-api-key"})
+    assert r.status_code == 200
+    assert r.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert "x-api-key" in r.headers["access-control-allow-headers"].lower()
+    ok = client.post("/predict", json=T(), headers={**H, "Origin": "http://localhost:5173"})
+    assert ok.status_code == 200 and ok.headers["access-control-allow-origin"] == "http://localhost:5173"
+    err = client.post("/predict", json=T(), headers={"Origin": "http://localhost:5173"})
+    assert_error(err, 401)
+    assert err.headers["access-control-allow-origin"] == "http://localhost:5173"  # browser can read the error
+
+
+def test_cors_ignores_unknown_origins_and_plain_clients(client):
+    r = client.post("/predict", json=T(), headers={**H, "Origin": "https://evil.example"})
+    assert r.status_code == 200 and "access-control-allow-origin" not in r.headers
+    assert "access-control-allow-origin" not in client.get("/health").headers
+    assert_error(client.options("/predict"), 405)  # no Origin: not a preflight, contract behaviour unchanged
+
+
+def test_demo_page_and_assets(client):
+    r = client.get("/demo", follow_redirects=False)
+    assert r.status_code == 307 and r.headers["location"] == "/demo/"
+    page = client.get("/demo/")
+    assert page.status_code == 200 and "__TENSORFORGE_API_BASE_URL__" in page.text
+    js = client.get("/demo/services/index.js")
+    assert js.status_code == 200 and "javascript" in js.headers["content-type"]
+    assert_error(client.get("/demo/services/nope.js"), 404)

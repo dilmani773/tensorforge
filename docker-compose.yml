@@ -1,0 +1,46 @@
+# Production stack: the API plus Caddy for automatic HTTPS.
+#   1. cp .env.example .env   and fill in API_KEY and DOMAIN
+#   2. docker compose up -d --build
+# The judges' run command (docker run -p 8000:8000 -e API_KEY=<key> <image>) still works on its own;
+# this file only adds what a public server needs: HTTPS, restarts, and persistent job storage.
+
+services:
+  api:
+    build: .
+    image: tensorforge:latest
+    restart: unless-stopped
+    environment:
+      API_KEY: ${API_KEY:?set API_KEY in .env}
+      ORT_THREADS: ${ORT_THREADS:-0}          # 0 = use every core
+      JOB_RETENTION_HOURS: ${JOB_RETENTION_HOURS:-24}
+    volumes:
+      - jobs:/app/runtime                     # async jobs survive restarts and image rebuilds
+    expose:
+      - "8000"
+    ports:
+      - "127.0.0.1:8000:8000"                 # reachable on the server itself for quick checks only
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [api]
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data                      # TLS certificates; keep them so Let's Encrypt limits are not hit
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+volumes:
+  jobs:
+  caddy_data:
+  caddy_config:

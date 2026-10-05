@@ -113,6 +113,11 @@ hosted server so jobs survive restarts. A job that was running when the service 
 | `JOB_RETENTION_HOURS` | 24 |
 | `JOB_CHUNK_SIZE` | 32 |
 
+## Deploy
+
+`docker-compose.yml` runs the API behind Caddy (automatic HTTPS) with restarts and a persistent job volume.
+Step-by-step server setup, sizing and checks: `docs/DEPLOY.md`.
+
 ## Demo dashboard
 
 Open `http://localhost:8000/demo` (or `/`) after starting the container. Paste the API key in the top bar.

@@ -1,23 +1,76 @@
 {
-  "model_version_tag": "tfidf-lr-0.1",
-  "validation": {
-    "category_macro_f1": 0.6394,
-    "category_accuracy": 0.6112,
-    "secondary_macro_f1": 0.6373,
-    "urgent_f1": 0.8904,
-    "category_ece": 0.0538,
+  "model_version_tag": "lang-ens-e5b+xlmr",
+  "encoders": {
+    "e5b": "intfloat/multilingual-e5-base",
+    "xlmr": "xlm-roberta-large"
+  },
+  "language_detector_accuracy": 1.0,
+  "single_model_category_accuracy": {
+    "tfidf": 0.6112,
+    "e5b": 0.9225,
+    "xlmr": 0.9313
+  },
+  "ensemble_nested_cv_estimate": {
+    "note": "all weights, temperature and thresholds tuned on 4/5 of validation, scored on the unseen 1/5; 3 repeats",
+    "category_accuracy": {
+      "mean": 0.9487,
+      "std": 0.0018
+    },
+    "category_macro_f1": {
+      "mean": 0.9568,
+      "std": 0.001
+    },
+    "secondary_macro_f1": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "urgent_f1": {
+      "mean": 1.0,
+      "std": 0.0
+    },
     "accuracy_by_language": {
-      "en": 0.5286,
-      "mixed": 0.45,
-      "si": 0.4125,
-      "singlish": 0.885,
-      "ta": 0.6333,
-      "tanglish": 0.65
+      "en": 0.9786,
+      "mixed": 1.0,
+      "si": 0.9938,
+      "singlish": 0.85,
+      "ta": 0.9917,
+      "tanglish": 0.9
     }
   },
+  "ensemble_in_sample": {
+    "category_accuracy": 0.9525,
+    "category_macro_f1": 0.9614,
+    "secondary_macro_f1": 1.0,
+    "urgent_f1": 1.0,
+    "category_ece": 0.0133,
+    "needs_human_review_rate": 0.0262
+  },
   "tuned": {
-    "sec_threshold": 0.2,
-    "urgent_threshold": 0.5499999999999999,
-    "temperature": 0.5432
+    "tfidf_cap": 0.5,
+    "w_cat": {
+      "native": {
+        "e5b": 0.5,
+        "xlmr": 0.5
+      },
+      "english": {
+        "e5b": 0.55,
+        "xlmr": 0.45
+      },
+      "roman": {
+        "tfidf": 0.45,
+        "e5b": 0.55
+      }
+    },
+    "w_sec": {
+      "e5b": 0.5,
+      "xlmr": 0.5
+    },
+    "w_urg": {
+      "e5b": 0.55,
+      "xlmr": 0.45
+    },
+    "sec_threshold": 0.5,
+    "urgent_threshold": 0.5,
+    "temperature": 0.5321
   }
 }

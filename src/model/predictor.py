@@ -20,6 +20,7 @@ Artifact format (joblib dict):
   w_sec, w_urg      {source: weight} (same for every group)
 """
 import hashlib
+import logging
 import json
 import os
 import re
@@ -62,6 +63,33 @@ class TfidfBackend:
         return p_cat, p_sec, p_urg
 
 
+def cpu_budget() -> int:
+    """CPUs this process may really use. ONNX Runtime's default looks at the host's cores, which inside a
+    container limited with --cpus starts far too many threads and makes inference ~40x slower."""
+    env = int(os.environ.get("ORT_THREADS", "0") or 0)
+    if env > 0:
+        return env
+    quota = None
+    try:  # cgroup v2
+        q, period = Path("/sys/fs/cgroup/cpu.max").read_text().split()[:2]
+        if q != "max":
+            quota = int(q) / int(period)
+    except (OSError, ValueError):
+        try:  # cgroup v1
+            q = int(Path("/sys/fs/cgroup/cpu/cpu.cfs_quota_us").read_text())
+            period = int(Path("/sys/fs/cgroup/cpu/cpu.cfs_period_us").read_text())
+            if q > 0:
+                quota = q / period
+        except (OSError, ValueError):
+            pass
+    try:
+        visible = len(os.sched_getaffinity(0))
+    except AttributeError:  # Windows / macOS
+        visible = os.cpu_count() or 1
+    n = visible if quota is None else min(visible, max(1, int(quota + 0.5)))
+    return max(1, n)
+
+
 class OnnxEncoder:
     """Multilingual encoder exported to ONNX int8. The model file may be split into parts
     (model.onnx.part00, part01, ...) to stay under GitHub's 100 MB file limit; they are joined in memory."""
@@ -87,9 +115,12 @@ class OnnxEncoder:
         self.fingerprint = hashlib.sha256(model_bytes + tok_bytes).hexdigest()
 
         opts = ort.SessionOptions()
-        opts.intra_op_num_threads = int(os.environ.get("ORT_THREADS", "0"))  # 0 = all cores
+        opts.intra_op_num_threads = cpu_budget()
         opts.inter_op_num_threads = 1
+        # Do not busy-wait between ops: with a CPU quota, spinning threads burn the quota for nothing.
+        opts.add_session_config_entry("session.intra_op.allow_spinning", "0")
         self.session = ort.InferenceSession(model_bytes, sess_options=opts, providers=["CPUExecutionProvider"])
+        logging.getLogger("model").info("encoder %s: %d inference threads", self.meta.get("model_name"), opts.intra_op_num_threads)
         del model_bytes
 
         self.tokenizer = Tokenizer.from_str(tok_bytes.decode("utf-8"))

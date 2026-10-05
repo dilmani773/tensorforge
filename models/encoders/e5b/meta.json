@@ -1,0 +1,62 @@
+{
+  "kind": "onnx_encoder",
+  "model_name": "intfloat/multilingual-e5-base",
+  "max_len": 384,
+  "pad_id": 1,
+  "pad_token": "<pad>",
+  "cat_classes": [
+    "account_promo",
+    "app_technical",
+    "delivery_delay",
+    "food_quality",
+    "general_inquiry",
+    "lost_item",
+    "order_missing_wrong",
+    "payment_refund",
+    "ride_trip_issue",
+    "safety_conduct",
+    "spam_irrelevant"
+  ],
+  "sec_classes": [
+    "none",
+    "app_technical",
+    "delivery_delay",
+    "order_missing_wrong",
+    "payment_refund",
+    "ride_trip_issue"
+  ],
+  "config": {
+    "model_name": "intfloat/multilingual-e5-base",
+    "max_len": 384,
+    "batch_size": 16,
+    "epochs": 6,
+    "lr_encoder": 3e-05,
+    "lr_heads": 0.001,
+    "weight_decay": 0.01,
+    "warmup": 0.1,
+    "label_smoothing": 0.05,
+    "w_sec": 0.5,
+    "w_urg": 0.5,
+    "aug_prob": 0.5,
+    "seed": 42,
+    "final_fit": true
+  },
+  "best_epoch": 6,
+  "val_metrics_run1": {
+    "category_macro_f1": 0.9368,
+    "category_accuracy": 0.9225,
+    "secondary_macro_f1": 0.9599,
+    "urgent_f1": 1.0,
+    "accuracy_by_language": {
+      "en": 0.9643,
+      "mixed": 1.0,
+      "si": 0.9313,
+      "singlish": 0.805,
+      "ta": 1.0,
+      "tanglish": 0.9
+    }
+  },
+  "onnx_int8_agreement": 1.0,
+  "tokenizer_parity": true,
+  "onnx_sha256": "0d8fb5337fa4a927974848aa13b38feb85e8dc810fb4216c54dbdeede0416ac0"
+}

@@ -1,190 +1,141 @@
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Header from './components/Header.jsx';
+import ApiKeyModal from './components/ApiKeyModal.jsx';
+import Hero from './components/Hero.jsx';
+import SingleTriage from './components/SingleTriage.jsx';
+import BatchImport from './components/BatchImport.jsx';
+import RoutingRules from './components/RoutingRules.jsx';
+import Footer from './components/Footer.jsx';
 import {
   healthCheck,
   predictTicket,
-  predictBatch,
-  createBatchJob,
-  getBatchJob,
-  getBatchResults,
-  setApiKey,
+  getDemoMetrics,
   getApiKey,
-  getApiMode,
+  setApiKey,
 } from '../../services/index.js';
 
-const defaultTicket = {
-  ticket_id: 'T-001',
-  channel: 'chat',
-  subject: 'Order delay',
-  text: 'My delivery was delayed and the driver never answered my messages.',
-};
+export default function App() {
+  const [apiKey, setApiKeyState] = useState(getApiKey() || '');
+  const [isApiModalOpen, setIsApiModalOpen] = useState(false);
+  const [healthInfo, setHealthInfo] = useState(null);
+  const [metrics, setMetrics] = useState(null);
 
-function App() {
-  const [apiKey, setApiKeyValue] = useState(getApiKey());
-  const [modeText, setModeText] = useState(getApiMode());
-  const [ticket, setTicket] = useState(defaultTicket);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
-  const [health, setHealth] = useState('Checking...');
-  const [loading, setLoading] = useState(false);
+  // Single ticket triage state
+  const [channel, setChannel] = useState('chat');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [singleResult, setSingleResult] = useState(null);
+  const [singleLoading, setSingleLoading] = useState(false);
+  const [lastLatencyMs, setLastLatencyMs] = useState(null);
+  const [singleError, setSingleError] = useState('');
 
-  useEffect(() => {
-    setApiKey(apiKey);
-  }, [apiKey]);
-
-  useEffect(() => {
-    async function loadHealth() {
-      try {
-        const body = await healthCheck();
-        setHealth(`${body.status} • ${body.model_version || 'n/a'}`);
-      } catch (err) {
-        setHealth('Unavailable');
+  const checkHealth = useCallback(async () => {
+    try {
+      const data = await healthCheck();
+      setHealthInfo(data);
+    } catch (err) {
+      if (err.status === 503) {
+        setHealthInfo({ status: 'loading', model_version: 'Loading weights...' });
+        setTimeout(checkHealth, 4000);
+      } else {
+        setHealthInfo({ status: 'error', error: err.message || 'Offline' });
       }
     }
-
-    loadHealth();
   }, []);
 
-  const callPredict = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await predictTicket(ticket);
-      setResult(response);
-    } catch (err) {
-      setError(err.message || 'Prediction failed');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    checkHealth();
+    async function loadMetrics() {
+      try {
+        const data = await getDemoMetrics();
+        setMetrics(data);
+      } catch (err) {
+        console.warn('Metrics endpoint not yet loaded:', err);
+      }
     }
+    loadMetrics();
+  }, [checkHealth]);
+
+  const handleSaveKey = (newKey) => {
+    setApiKeyState(newKey);
+    setApiKey(newKey);
+    checkHealth();
   };
 
-  const callBatch = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await predictBatch([
-        { ...ticket, ticket_id: 'B-1' },
-        { ...ticket, ticket_id: 'B-2', text: 'The app keeps crashing after checkout.' },
-      ]);
-      setResult(response);
-    } catch (err) {
-      setError(err.message || 'Batch prediction failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleRouteTicket = async (overrideData) => {
+    setSingleError('');
+    const targetText = overrideData?.message != null ? overrideData.message : message;
+    const targetChannel = overrideData?.channel != null ? overrideData.channel : channel;
+    const targetSubject = overrideData?.subject != null ? overrideData.subject : subject;
 
-  const callJob = async () => {
-    setLoading(true);
-    setError('');
+    if (!targetText.trim()) {
+      setSingleError('Please enter a customer message or select a sample inquiry.');
+      return;
+    }
+
+    setSingleLoading(true);
+    const start = performance.now();
+
     try {
-      const job = await createBatchJob([
-        { ...ticket, ticket_id: 'J-1' },
-        { ...ticket, ticket_id: 'J-2', channel: 'email', text: 'Urgent refund request for duplicate charge.' },
-      ]);
-      const status = await getBatchJob(job.job_id);
-      const res = await getBatchResults(job.job_id, { offset: 0, limit: 10 });
-      setResult({ job, status, results: res });
+      const res = await predictTicket({
+        ticket_id: `TF-${Date.now().toString(36).toUpperCase()}`,
+        channel: targetChannel,
+        subject: targetSubject.trim(),
+        text: targetText.trim(),
+      });
+      const elapsed = Math.round(performance.now() - start);
+      setLastLatencyMs(elapsed);
+      setSingleResult(res);
     } catch (err) {
-      setError(err.message || 'Batch job failed');
+      let msg = err.message || 'Inference request failed.';
+      if (err.status === 401) {
+        msg = 'Unauthorized: Invalid or missing API key. Please click "Set API Key" in the top bar.';
+      } else if (err.status === 422) {
+        msg = 'Validation Error: Check that the channel and text fields are properly formatted.';
+      }
+      setSingleError(msg);
     } finally {
-      setLoading(false);
+      setSingleLoading(false);
     }
   };
 
   return (
-    <div className="app">
-      <header>
-        <h1>TensorForge API Demo</h1>
-        <div className="api-status">Mode: {modeText} • Health: {health}</div>
-      </header>
+    <div className="text-warm-heading font-sans antialiased min-h-screen flex flex-col selection:bg-cherry-100 selection:text-cherry-800 bg-[#FAF7F7]">
+      <Header
+        healthInfo={healthInfo}
+        apiKey={apiKey}
+        onOpenApiModal={() => setIsApiModalOpen(true)}
+      />
 
-      <div className="card">
-        <div className="controls">
-          <div>
-            <label htmlFor="api-key">API key</label>
-            <input
-              id="api-key"
-              type="password"
-              value={apiKey}
-              placeholder="Paste the key at runtime"
-              onChange={(event) => setApiKeyValue(event.target.value)}
-            />
-          </div>
+      <ApiKeyModal
+        isOpen={isApiModalOpen}
+        onClose={() => setIsApiModalOpen(false)}
+        apiKey={apiKey}
+        onSaveKey={handleSaveKey}
+      />
 
-          <div>
-            <label htmlFor="api-mode">API mode</label>
-            <input
-              id="api-mode"
-              value={modeText}
-              readOnly
-            />
-          </div>
-        </div>
+      <main className="flex-grow soft-dot-grid pb-20">
+        <Hero metrics={metrics} lastLatencyMs={lastLatencyMs} />
 
-        <div className="controls" style={{ marginTop: 20 }}>
-          <div>
-            <label htmlFor="channel">Channel</label>
-            <select
-              id="channel"
-              value={ticket.channel}
-              onChange={(event) => setTicket({ ...ticket, channel: event.target.value })}
-            >
-              <option value="chat">chat</option>
-              <option value="email">email</option>
-              <option value="call_transcript">call_transcript</option>
-            </select>
-          </div>
+        <SingleTriage
+          channel={channel}
+          onChannelChange={setChannel}
+          subject={subject}
+          onSubjectChange={setSubject}
+          message={message}
+          onMessageChange={setMessage}
+          onRouteTicket={handleRouteTicket}
+          loading={singleLoading}
+          result={singleResult}
+          error={singleError}
+        />
 
-          <div>
-            <label htmlFor="ticket-id">Ticket ID</label>
-            <input
-              id="ticket-id"
-              value={ticket.ticket_id}
-              onChange={(event) => setTicket({ ...ticket, ticket_id: event.target.value })}
-            />
-          </div>
-        </div>
+        <BatchImport />
 
-        <div style={{ marginTop: 20 }}>
-          <label htmlFor="subject">Subject</label>
-          <input
-            id="subject"
-            value={ticket.subject}
-            onChange={(event) => setTicket({ ...ticket, subject: event.target.value })}
-          />
-        </div>
+        <RoutingRules metrics={metrics} activeTeam={singleResult?.team} />
+      </main>
 
-        <div style={{ marginTop: 20 }}>
-          <label htmlFor="text">Ticket text</label>
-          <textarea
-            id="text"
-            value={ticket.text}
-            onChange={(event) => setTicket({ ...ticket, text: event.target.value })}
-          />
-        </div>
-
-        <div className="actions">
-          <button disabled={loading} onClick={callPredict}>Predict single</button>
-          <button className="secondary" disabled={loading} onClick={callBatch}>Predict batch</button>
-          <button className="secondary" disabled={loading} onClick={callJob}>Create batch job</button>
-        </div>
-
-        {error ? <div className="error">{error}</div> : null}
-
-        {result ? (
-          <div className="output">
-            <h2>Response</h2>
-            <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{JSON.stringify(result, null, 2)}</pre>
-          </div>
-        ) : (
-          <div className="output muted">
-            <h3>No response yet</h3>
-            <p>Use the buttons above to call the backend through the API service layer.</p>
-          </div>
-        )}
-      </div>
+      <Footer />
     </div>
   );
 }
-
-export default App;

@@ -8,9 +8,9 @@ export default function Footer() {
           <span className="w-2 h-2 rounded-full bg-cherry-600"></span>
           <span className="font-medium text-slate-700">RideEat Ticket Router</span>
           <span>•</span>
-          <span>Powered by TensorForge 2.0</span>
+          <span>Powered by Team Paradox</span>
           <span>•</span>
-          <span>IEEE CS KDU</span>
+          <span>University of Peradeniya</span>
         </div>
         <div className="flex items-center gap-4 text-[11px]">
           {/* Honest Cloud Processing & Encryption Disclaimer */}

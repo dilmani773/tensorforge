@@ -8,5 +8,23 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    proxy: {
+      '/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/predict': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/batch': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/demo/metrics': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
   },
 });

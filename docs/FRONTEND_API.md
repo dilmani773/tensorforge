@@ -4,13 +4,15 @@
 
 | Where the frontend runs | Base URL to use |
 |---|---|
-| Vite dev server (`npm run dev`, port 5173) | `http://localhost:8000` (local Docker/uvicorn) |
+| Vite dev server (`npm run dev`, port 5173) | same origin; Vite proxies `/health`, `/predict`, `/batch`, and `/demo/metrics` to `http://localhost:8000` |
 | Hosted frontend (Vercel, Netlify, ...) | `https://<API DOMAIN>` from the deployed server |
 | The built-in page at `/demo/` | same origin (the server sets it automatically) |
 
-The API must allow the frontend's address (CORS). Ports 5173 and 4173 on localhost are allowed by default.
-For a hosted frontend, the server owner adds its exact origin to `CORS_ORIGINS` in `.env`
-(no trailing slash, e.g. `https://tensorforge.vercel.app`) and runs `docker compose up -d`.
+Start the backend on port 8000 before running the Vite app. The development proxy keeps the browser on
+port 5173 while sending API requests to the backend. The API must allow the frontend's address (CORS).
+Ports 5173 and 4173 on localhost are allowed by default. For a hosted frontend, the server owner adds its
+exact origin to `CORS_ORIGINS` in `.env` (no trailing slash, e.g. `https://tensorforge.vercel.app`)
+and runs `docker compose up -d`.
 
 ## Auth: never put the key in frontend code
 

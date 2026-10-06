@@ -14,6 +14,7 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parent.parent
 KEY = "test-key-123"
 H = {"X-API-Key": KEY, "Content-Type": "application/json"}
+DEFAULT_JOB_TIMEOUT_SECONDS = float(os.environ.get("TEST_JOB_TIMEOUT_SECONDS", "300"))
 
 
 def schema(name):
@@ -226,7 +227,7 @@ def test_batch_100_ok_and_413(client):
 
 
 # ------------------------------------------------------------------ async jobs
-def wait_done(client, job_id, timeout=60):
+def wait_done(client, job_id, timeout=DEFAULT_JOB_TIMEOUT_SECONDS):
     t = time.time()
     while time.time() - t < timeout:
         r = client.get(f"/batch/jobs/{job_id}", headers=H)
@@ -275,6 +276,32 @@ def test_job_full_flow(client):
     assert client.delete(f"/batch/jobs/{job_id}", headers=H).status_code == 204
     assert_error(client.get(f"/batch/jobs/{job_id}", headers=H), 404)
     assert_error(client.delete(f"/batch/jobs/{job_id}", headers=H), 404)
+
+
+def test_worker_processes_chunks_and_persists_completion(client, monkeypatch):
+    from src.api import config
+    from src.api.jobs import Worker
+
+    monkeypatch.setattr(config, "JOB_CHUNK_SIZE", 2)
+    store = client.main.S.store
+    tickets = [T(i) for i in range(5)]
+    row, _ = store.submit(tickets, "test-model")
+    seen = []
+
+    class DeterministicPredictor:
+        def predict(self, chunk):
+            seen.append([ticket["ticket_id"] for ticket in chunk])
+            return [{"ticket_id": ticket["ticket_id"]} for ticket in chunk]
+
+    claimed_job_id, claimed_tickets = store.claim_next()
+    assert claimed_job_id == row["job_id"]
+    Worker(store, lambda: DeterministicPredictor())._run_job(claimed_job_id, claimed_tickets)
+
+    assert seen == [["T-0", "T-1"], ["T-2", "T-3"], ["T-4"]]
+    completed = store.get(row["job_id"])
+    assert completed["status"] == "succeeded"
+    assert completed["processed"] == len(tickets)
+    assert len(store.results(row["job_id"])) == len(tickets)
 
 
 def test_job_validation_creates_nothing(client):

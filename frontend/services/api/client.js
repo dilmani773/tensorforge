@@ -62,7 +62,8 @@ export function resolveApiBaseUrl() {
   }
 
   const env = getViteEnv();
-  const baseUrl = env.VITE_API_BASE_URL || env.API_BASE_URL || 'http://localhost:8000';
+  const browserOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000';
+  const baseUrl = env.VITE_API_BASE_URL || env.API_BASE_URL || browserOrigin;
   return String(baseUrl).replace(/\/$/, '');
 }
 

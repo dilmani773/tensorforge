@@ -1,6 +1,15 @@
 # Caddy gets and renews the HTTPS certificate for $DOMAIN automatically (ports 80 and 443 must be open).
 {$DOMAIN} {
 	encode gzip
+
+	# Serve the React SPA at /app/
+	handle_path /app/* {
+		root * /srv/frontend
+		try_files {path} /index.html
+		file_server
+	}
+
+	# Everything else goes to the API
 	request_body {
 		max_size 100MB           # keep above 25 MB: the API itself enforces 1 / 5 / 25 MB and answers 413 in JSON
 	}

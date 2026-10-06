@@ -34,6 +34,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - ./frontend/vite-app/dist:/srv/frontend:ro
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data                      # TLS certificates; keep them so Let's Encrypt limits are not hit
       - caddy_config:/config

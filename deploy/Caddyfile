@@ -1,15 +1,29 @@
 # Caddy gets and renews the HTTPS certificate for $DOMAIN automatically (ports 80 and 443 must be open).
+#
+# Routing: /app/* serves the frontend's static build; everything else (/predict, /batch/jobs, /health, ...)
+# goes to the API unprefixed, exactly as the organisers' spec requires. Do NOT put the API behind /api/* —
+# the judges' harness calls paths at the root (e.g. https://<domain>/predict), not /api/predict.
 {$DOMAIN} {
 	encode gzip
 	request_body {
 		max_size 100MB           # keep above 25 MB: the API itself enforces 1 / 5 / 25 MB and answers 413 in JSON
 	}
-	reverse_proxy api:8000 {
-		transport http {
-			read_timeout 5m
-			write_timeout 5m
+
+	handle_path /app/* {
+		root * /srv/app
+		try_files {path} /index.html   # client-side routing: unknown sub-paths fall back to index.html
+		file_server
+	}
+
+	handle {
+		reverse_proxy api:8000 {
+			transport http {
+				read_timeout 5m
+				write_timeout 5m
+			}
 		}
 	}
+
 	log {
 		output stdout
 		format console

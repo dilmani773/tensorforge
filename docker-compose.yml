@@ -13,7 +13,6 @@ services:
       API_KEY: ${API_KEY:?set API_KEY in .env}
       ORT_THREADS: ${ORT_THREADS:-0}          # 0 = use every core
       JOB_RETENTION_HOURS: ${JOB_RETENTION_HOURS:-24}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}  # add the hosted frontend URL
     volumes:
       - jobs:/app/runtime                     # async jobs survive restarts and image rebuilds
     expose:
@@ -37,6 +36,7 @@ services:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data                      # TLS certificates; keep them so Let's Encrypt limits are not hit
       - caddy_config:/config
+      - ./frontend/vite-app/dist:/srv/app:ro   # frontend static build, served at /app/ (empty dir is fine before it's built)
     logging:
       driver: json-file
       options: { max-size: "20m", max-file: "5" }

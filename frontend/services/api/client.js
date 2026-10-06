@@ -62,8 +62,15 @@ export function resolveApiBaseUrl() {
   }
 
   const env = getViteEnv();
-  const baseUrl = env.VITE_API_BASE_URL || env.API_BASE_URL || 'http://localhost:8000';
-  return String(baseUrl).replace(/\/$/, '');
+  const fromEnv = env.VITE_API_BASE_URL || env.API_BASE_URL;
+  if (fromEnv) return String(fromEnv).replace(/\/$/, '');
+
+  // No base URL configured: call the origin this page was served from (correct for the /app/ deployment
+  // on the shared domain). Only outside a browser (e.g. Node tests) do we fall back to localhost.
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return 'http://localhost:8000';
 }
 
 export function getApiKey() {

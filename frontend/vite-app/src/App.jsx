@@ -6,6 +6,7 @@ import SingleTriage from './components/SingleTriage.jsx';
 import BatchImport from './components/BatchImport.jsx';
 import RoutingRules from './components/RoutingRules.jsx';
 import Footer from './components/Footer.jsx';
+import ThemeToggle from './components/ThemeToggle.jsx';
 import {
   healthCheck,
   predictTicket,
@@ -14,9 +15,21 @@ import {
   setApiKey,
 } from '../../services/index.js';
 
+function getInitialTheme() {
+  try {
+    const savedTheme = window.localStorage.getItem('tensorforge_theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+  } catch (error) {
+    // Storage can be unavailable in privacy-restricted browser contexts.
+  }
+
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 export default function App() {
   const [apiKey, setApiKeyState] = useState(getApiKey() || '');
   const [isApiModalOpen, setIsApiModalOpen] = useState(false);
+  const [isDark, setIsDark] = useState(getInitialTheme);
   const [healthInfo, setHealthInfo] = useState(null);
   const [metrics, setMetrics] = useState(null);
 
@@ -55,6 +68,16 @@ export default function App() {
     }
     loadMetrics();
   }, [checkHealth]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    try {
+      window.localStorage.setItem('tensorforge_theme', isDark ? 'dark' : 'light');
+    } catch (error) {
+      // The theme still works when storage is unavailable.
+    }
+  }, [isDark]);
 
   const handleSaveKey = (newKey) => {
     setApiKeyState(newKey);
@@ -100,10 +123,12 @@ export default function App() {
   };
 
   return (
-    <div className="text-warm-heading font-sans antialiased min-h-screen flex flex-col selection:bg-cherry-100 selection:text-cherry-800 bg-[#FAF7F7]">
+    <div className="theme-app text-warm-heading font-sans antialiased min-h-screen flex flex-col selection:bg-cherry-100 selection:text-cherry-800 bg-[#FAF7F7] dark:selection:bg-cherry-800 dark:selection:text-cherry-100">
       <Header
         healthInfo={healthInfo}
         apiKey={apiKey}
+        isDark={isDark}
+        onToggleTheme={() => setIsDark((current) => !current)}
         onOpenApiModal={() => setIsApiModalOpen(true)}
       />
 

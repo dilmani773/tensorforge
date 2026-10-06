@@ -132,7 +132,7 @@ export default function App() {
 
         <BatchImport />
 
-        <RoutingRules metrics={metrics} />
+        <RoutingRules metrics={metrics} activeTeam={singleResult?.team} />
       </main>
 
       <Footer />

@@ -49,7 +49,6 @@ export const TEAMS_METADATA = [
     category: 'delivery_delay',
     icon: '🛵',
     desc: 'Rider routing, delays & GPS dropoffs',
-    isPrimary: true,
   },
   {
     name: 'Restaurant Quality',
@@ -71,7 +70,6 @@ export const TEAMS_METADATA = [
     category: 'safety_conduct',
     icon: '🛡️',
     desc: 'Immediate threat & harassment triage',
-    isUrgent: true,
   },
   {
     name: 'Tech Support',

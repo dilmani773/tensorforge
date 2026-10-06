@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TEAMS_METADATA } from '../utils/constants.js';
 
-export default function RoutingRules({ metrics }) {
+export default function RoutingRules({ metrics, activeTeam }) {
   const [showBenchmarkDetails, setShowBenchmarkDetails] = useState(false);
 
   // Model comparison numbers from metrics.json / /demo/metrics
@@ -53,7 +53,7 @@ export default function RoutingRules({ metrics }) {
             </p>
           </div>
           <button
-            className="px-3.5 py-1.5 text-xs font-semibold text-cherry-700 bg-cherry-50 hover:bg-cherry-100 border border-cherry-200/80 rounded-xl transition-colors flex items-center gap-1.5 self-start sm:self-auto shadow-sm"
+            className="px-3.5 py-1.5 text-xs font-semibold text-cherry-700 bg-cherry-50 hover:bg-cherry-100 border border-cherry-200/80 rounded-xl transition-colors flex items-center gap-1.5 self-start sm:self-auto shadow-sm cursor-pointer"
             onClick={() => setShowBenchmarkDetails(!showBenchmarkDetails)}
             type="button"
           >
@@ -62,53 +62,46 @@ export default function RoutingRules({ metrics }) {
           </button>
         </div>
 
-        {/* 11 Production Backend Routing Teams Grid */}
+        {/* 11 Production Backend Routing Teams Grid - Clean, balanced, uniform cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
           {TEAMS_METADATA.map((team) => {
-            const isHighlight = team.isPrimary;
-            const isUrgent = team.isUrgent;
+            const isActive = activeTeam && team.name === activeTeam;
 
             let cardClasses =
-              'p-3.5 rounded-xl border transition-colors flex flex-col justify-between ';
-            if (isUrgent) {
-              cardClasses += 'border-rose-300 bg-rose-50/60 hover:border-rose-400';
-            } else if (isHighlight) {
-              cardClasses += 'border-rose-200 bg-rose-50/30 hover:border-cherry-300';
+              'p-3.5 rounded-xl border transition-all flex flex-col justify-between group ';
+            if (isActive) {
+              cardClasses +=
+                'border-cherry-500 bg-cherry-50/70 shadow-sm ring-1 ring-cherry-500/30';
             } else {
               cardClasses +=
-                'border-stone-200/80 bg-stone-50/50 hover:border-cherry-200';
+                'border-stone-200/80 bg-stone-50/50 hover:border-cherry-300 hover:bg-rose-50/20 hover:shadow-sm';
             }
 
             return (
               <div key={team.key} className={cardClasses}>
                 <div>
-                  <span className="text-xl">{team.icon}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl">{team.icon}</span>
+                    {isActive && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-cherry-600 text-white px-1.5 py-0.5 rounded-full">
+                        Active Target
+                      </span>
+                    )}
+                  </div>
                   <div
                     className={`font-bold mt-2 ${
-                      isUrgent
-                        ? 'text-rose-900'
-                        : isHighlight
-                        ? 'text-rose-950'
-                        : 'text-slate-900'
+                      isActive ? 'text-cherry-900' : 'text-slate-900 group-hover:text-cherry-900'
                     }`}
                   >
                     {team.name}
                   </div>
-                  <div
-                    className={`text-[11px] mt-0.5 ${
-                      isUrgent ? 'text-rose-700' : 'text-warm-muted'
-                    }`}
-                  >
+                  <div className="text-warm-muted text-[11px] mt-0.5 leading-snug">
                     {team.desc}
                   </div>
                 </div>
                 <span
                   className={`mt-2.5 inline-block text-[10px] font-mono ${
-                    isUrgent
-                      ? 'text-rose-800 font-semibold'
-                      : isHighlight
-                      ? 'text-cherry-700'
-                      : 'text-stone-500'
+                    isActive ? 'text-cherry-700 font-semibold' : 'text-stone-500 group-hover:text-cherry-700'
                   }`}
                 >
                   category: {team.key}

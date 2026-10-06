@@ -1,6 +1,24 @@
-# Frontend API integration
+# Frontend
 
-This repo currently serves a static HTML demo in [frontend/index.html](index.html). The UI is intentionally left in place while the API integration logic is isolated in [frontend/services](services).
+The canonical user interface is the React/Vite application in [vite-app](vite-app). The shared API integration layer is in [services](services).
+
+## Run locally
+
+From the repository root:
+
+```bash
+npm --prefix frontend run dev
+```
+
+The development server listens on `http://localhost:5173` and serves Didulana's UI.
+
+## Build
+
+```bash
+npm --prefix frontend run build
+```
+
+The production output is written to [vite-app/dist](vite-app/dist).
 
 ## Runtime configuration
 

@@ -62,9 +62,13 @@ export default function App() {
     checkHealth();
   };
 
-  const handleRouteTicket = async () => {
+  const handleRouteTicket = async (overrideData) => {
     setSingleError('');
-    if (!message.trim()) {
+    const targetText = overrideData?.message != null ? overrideData.message : message;
+    const targetChannel = overrideData?.channel != null ? overrideData.channel : channel;
+    const targetSubject = overrideData?.subject != null ? overrideData.subject : subject;
+
+    if (!targetText.trim()) {
       setSingleError('Please enter a customer message or select a sample inquiry.');
       return;
     }
@@ -75,9 +79,9 @@ export default function App() {
     try {
       const res = await predictTicket({
         ticket_id: `TF-${Date.now().toString(36).toUpperCase()}`,
-        channel,
-        subject: subject.trim(),
-        text: message.trim(),
+        channel: targetChannel,
+        subject: targetSubject.trim(),
+        text: targetText.trim(),
       });
       const elapsed = Math.round(performance.now() - start);
       setLastLatencyMs(elapsed);
@@ -128,7 +132,7 @@ export default function App() {
 
         <BatchImport />
 
-        <RoutingRules />
+        <RoutingRules metrics={metrics} />
       </main>
 
       <Footer />

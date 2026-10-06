@@ -1,4 +1,4 @@
-/* Category → team mapping from the API contract */
+/* Category → team mapping from the API contract (labels.py) */
 export const TEAM_BY_CATEGORY = {
   payment_refund: 'Payments & Refunds',
   ride_trip_issue: 'Ride Operations',
@@ -13,39 +13,39 @@ export const TEAM_BY_CATEGORY = {
   spam_irrelevant: 'Auto-close / Spam Filter',
 };
 
-/* Team metadata for icons, descriptions, and keys */
+/* 11 Production Backend Routing Teams with official category keys matching the API contract */
 export const TEAMS_METADATA = [
   {
     name: 'Payments & Refunds',
-    key: 'payments_refunds',
+    key: 'payment_refund',
     category: 'payment_refund',
     icon: '💳',
     desc: 'Disputed charges, wallet & payouts',
   },
   {
     name: 'Ride Operations',
-    key: 'ride_operations',
+    key: 'ride_trip_issue',
     category: 'ride_trip_issue',
     icon: '🚗',
     desc: 'Fares, pickups & ride cancellations',
   },
   {
     name: 'Lost & Found',
-    key: 'lost_and_found',
+    key: 'lost_item',
     category: 'lost_item',
     icon: '🎒',
     desc: 'Left items in cabs & vehicle recovery',
   },
   {
     name: 'Food Operations',
-    key: 'food_operations',
+    key: 'order_missing_wrong',
     category: 'order_missing_wrong',
     icon: '🍔',
     desc: 'Missing portions & dish preparation',
   },
   {
     name: 'Delivery Operations',
-    key: 'delivery_operations',
+    key: 'delivery_delay',
     category: 'delivery_delay',
     icon: '🛵',
     desc: 'Rider routing, delays & GPS dropoffs',
@@ -53,21 +53,21 @@ export const TEAMS_METADATA = [
   },
   {
     name: 'Restaurant Quality',
-    key: 'restaurant_quality',
+    key: 'food_quality',
     category: 'food_quality',
     icon: '🍽️',
     desc: 'Food temp, spillage & packaging standards',
   },
   {
     name: 'Account Services',
-    key: 'account_services',
+    key: 'account_promo',
     category: 'account_promo',
     icon: '👤',
     desc: 'Profile updates, KYC & login verification',
   },
   {
     name: 'Trust & Safety',
-    key: 'trust_and_safety',
+    key: 'safety_conduct',
     category: 'safety_conduct',
     icon: '🛡️',
     desc: 'Immediate threat & harassment triage',
@@ -75,21 +75,21 @@ export const TEAMS_METADATA = [
   },
   {
     name: 'Tech Support',
-    key: 'tech_support',
+    key: 'app_technical',
     category: 'app_technical',
     icon: '📱',
     desc: 'App crashes, bugs & checkout errors',
   },
   {
     name: 'Front-line Support',
-    key: 'frontline_support',
+    key: 'general_inquiry',
     category: 'general_inquiry',
     icon: '🎧',
     desc: 'General questions & promo guidance',
   },
   {
     name: 'Auto-close / Spam Filter',
-    key: 'auto_close_spam',
+    key: 'spam_irrelevant',
     category: 'spam_irrelevant',
     icon: '🧹',
     desc: 'Automated bot filters & non-actionable',

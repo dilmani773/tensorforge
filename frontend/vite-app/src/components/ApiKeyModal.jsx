@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
   const [keyInput, setKeyInput] = useState(apiKey || '');
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    setKeyInput(apiKey || '');
+  }, [apiKey, isOpen]);
+
   if (!isOpen) return null;
 
   const handleSave = () => {
     onSaveKey(keyInput.trim());
+    onClose();
+  };
+
+  const handleClearKey = () => {
+    setKeyInput('');
+    onSaveKey('');
     onClose();
   };
 
@@ -24,7 +34,7 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
             <h3 className="text-base font-bold text-slate-900">Configure API Key</h3>
           </div>
           <button
-            className="text-stone-400 hover:text-stone-700 text-lg leading-none p-1"
+            className="text-stone-400 hover:text-stone-700 text-lg leading-none p-1 cursor-pointer"
             onClick={onClose}
             type="button"
           >
@@ -44,14 +54,14 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
               <input
                 id="api-key-input"
                 className="w-full px-3.5 py-2.5 pr-10 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:border-cherry-500 focus:ring-2 focus:ring-cherry-100 text-slate-900 placeholder:text-stone-400 font-mono transition-colors"
-                placeholder="tf-live_••••••••••••••••••••"
+                placeholder="Paste API key or bearer token"
                 type={showPassword ? 'text' : 'password'}
                 value={keyInput}
                 onChange={(e) => setKeyInput(e.target.value)}
                 autoFocus
               />
               <button
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-stone-400 hover:text-stone-700"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-stone-400 hover:text-stone-700 cursor-pointer"
                 onClick={() => setShowPassword(!showPassword)}
                 type="button"
                 title={showPassword ? 'Hide Key' : 'Show Key'}
@@ -68,27 +78,40 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
             <span className={`w-2 h-2 rounded-full ${apiKey ? 'bg-emerald-500' : 'bg-stone-300'}`}></span>
             <span>
               {apiKey
-                ? 'Status: Active session bearer credentials set.'
+                ? 'Status: Active session bearer credentials configured.'
                 : 'Status: No custom API key configured (using default server auth).'}
             </span>
           </div>
         </div>
 
-        <div className="pt-3 border-t border-stone-100 flex items-center justify-end gap-2">
-          <button
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-stone-100 transition-colors"
-            onClick={onClose}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="px-4 py-2 rounded-xl bg-cherry-600 hover:bg-cherry-700 text-white font-semibold text-xs shadow-sm transition-colors"
-            onClick={handleSave}
-            type="button"
-          >
-            Save Credentials
-          </button>
+        <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
+          <div>
+            {apiKey && (
+              <button
+                className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors cursor-pointer"
+                onClick={handleClearKey}
+                type="button"
+              >
+                Clear Key
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-stone-100 transition-colors cursor-pointer"
+              onClick={onClose}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className="px-4 py-2 rounded-xl bg-cherry-600 hover:bg-cherry-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+              onClick={handleSave}
+              type="button"
+            >
+              Save Credentials
+            </button>
+          </div>
         </div>
       </div>
     </div>

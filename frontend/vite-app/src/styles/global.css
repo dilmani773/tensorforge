@@ -29,6 +29,20 @@ html.dark body {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .scroll-reveal {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+    transition:
+      opacity 620ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      transform 620ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: var(--scroll-reveal-delay, 0ms);
+  }
+
+  .scroll-reveal.is-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
   .hero-reveal {
     animation: hero-reveal 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }

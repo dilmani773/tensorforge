@@ -104,6 +104,36 @@ export default function App() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const sections = document.querySelectorAll('main > section');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    sections.forEach((section, index) => {
+      section.classList.add('scroll-reveal');
+      section.style.setProperty('--scroll-reveal-delay', `${index * 90}ms`);
+    });
+
+    if (!('IntersectionObserver' in window)) {
+      sections.forEach((section) => section.classList.add('is-visible'));
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle('is-visible', entry.isIntersecting);
+        });
+      },
+      {
+        rootMargin: '0px 0px -8% 0px',
+        threshold: 0.05,
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
   const handleSaveKey = (newKey) => {
     setApiKeyState(newKey);
     setApiKey(newKey);

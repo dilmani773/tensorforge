@@ -1,9 +1,14 @@
 import React from 'react';
 import ThemeToggle from './ThemeToggle.jsx';
 
-export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOpenApiModal }) {
+export default function Header({ healthInfo, apiKey, isDark, activeSection, onToggleTheme, onOpenApiModal }) {
   const isHealthy = healthInfo?.status === 'ok' || healthInfo?.status === 'ready';
   const isLoading = healthInfo?.status === 'loading';
+  const navItems = [
+    { id: 'single-triage', label: 'Single Ticket' },
+    { id: 'batch-import', label: 'Batch Import' },
+    { id: 'routing-rules', label: 'Routing Rules' },
+  ];
 
   return (
     <header className="header-surface bg-white/90 backdrop-blur-md border-b border-warm-border sticky top-0 z-40 dark:border-slate-800">
@@ -11,7 +16,7 @@ export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOp
         {/* Brand & Navigation */}
         <div className="flex items-center gap-8">
           <a className="flex items-center gap-3 group" href="#single-triage">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cherry-600 to-rose-400 flex items-center justify-center text-white shadow-md shadow-cherry-600/20 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cherry-600 to-rose-400 dark:from-emerald-600 dark:to-teal-400 flex items-center justify-center text-white shadow-md shadow-cherry-600/20 group-hover:scale-105 transition-transform">
               {/* Ticket Router Icon */}
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                 <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" strokeLinecap="round" strokeLinejoin="round" />
@@ -20,7 +25,7 @@ export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOp
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-slate-900 text-lg tracking-tight dark:text-white">RideEat</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-cherry-50 text-cherry-700 border border-cherry-200/70 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-900/80">
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-cherry-50 text-cherry-700 border border-cherry-200/70 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/80">
                   Ticket Router
                 </span>
               </div>
@@ -29,25 +34,27 @@ export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOp
           </a>
 
           {/* Simple Nav Links */}
-          <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
-            <a
-              className="px-3 py-1.5 rounded-lg text-cherry-700 bg-cherry-50/80 font-semibold transition-colors dark:text-rose-300 dark:bg-rose-950/40"
-              href="#single-triage"
-            >
-              Single Ticket
-            </a>
-            <a
-              className="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-stone-100/60 transition-colors dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
-              href="#batch-import"
-            >
-              Batch Import
-            </a>
-            <a
-              className="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-stone-100/60 transition-colors dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
-              href="#routing-rules"
-            >
-              Routing Rules
-            </a>
+          <nav className="hidden md:flex items-center gap-1 text-sm font-medium" aria-label="Application sections">
+            {navItems.map((item) => {
+              const isActive = activeSection === item.id;
+              return (
+                <a
+                  key={item.id}
+                  className={`relative px-3 py-1.5 rounded-lg font-semibold transition-colors ${
+                    isActive
+                      ? 'text-cherry-700 bg-cherry-50/80 dark:text-emerald-300 dark:bg-emerald-950/40'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-stone-100/60 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800'
+                  }`}
+                  href={`#${item.id}`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {item.label}
+                  {isActive && (
+                    <span className="absolute inset-x-2 -bottom-1 h-0.5 rounded-full bg-cherry-500 shadow-[0_0_10px_rgba(244,63,94,0.75)] dark:bg-emerald-400 dark:shadow-[0_0_10px_rgba(52,211,153,0.65)]" aria-hidden="true" />
+                  )}
+                </a>
+              );
+            })}
           </nav>
         </div>
 

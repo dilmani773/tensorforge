@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Check, ClipboardList, Zap } from 'lucide-react';
 import { parseCSV, predictionsToCSV, downloadCSV, generateSampleCSV } from '../utils/csv.js';
 import { detectLanguage } from '../utils/constants.js';
 import { predictBatch, createBatchJob, getBatchJob, getBatchResults } from '../../../services/index.js';
@@ -228,7 +229,8 @@ export default function BatchImport() {
               type="button"
               disabled={processing}
             >
-              <span>⚡ Run 50-Ticket Benchmark</span>
+              <Zap className="w-4 h-4" aria-hidden="true" />
+              <span>Run 50-Ticket Benchmark</span>
             </button>
           </div>
         </div>
@@ -282,7 +284,7 @@ export default function BatchImport() {
 
         {/* Error notification */}
         {error && (
-          <div className="mt-4 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+          <div className="dark-alert mt-4 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 dark:bg-rose-950/80 dark:border-rose-800 dark:text-rose-200">
             <strong>Batch Routing Error:</strong> {error}
           </div>
         )}
@@ -342,7 +344,7 @@ export default function BatchImport() {
                         <td className="py-2.5 px-3 font-semibold text-slate-800">{p.team}</td>
                         <td className="py-2.5 px-3">
                           {isUrgent ? (
-                            <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-semibold text-[10px]">
+                            <span className="dark-alert px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-semibold text-[10px] dark:bg-rose-950 dark:text-rose-200">
                               Urgent
                             </span>
                           ) : (
@@ -361,7 +363,9 @@ export default function BatchImport() {
                             <span className="text-slate-500 text-[11px]">No</span>
                           )}
                         </td>
-                        <td className="py-2.5 px-3 text-right text-emerald-600 font-medium">✓ Dispatched</td>
+                        <td className="py-2.5 px-3 text-right text-emerald-600 font-medium">
+                          <span className="inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" aria-hidden="true" /> Dispatched</span>
+                        </td>
                       </tr>
                     );
                   })}
@@ -395,7 +399,8 @@ export default function BatchImport() {
         {!hasResults && !processing && (
           <div className="mt-6 bg-stone-50/50 border border-stone-100 rounded-2xl p-5 text-xs text-warm-muted">
             <div className="flex items-center gap-2 font-semibold text-slate-800 mb-2">
-              <span>📋</span> Batch Routing Pipeline Specifications
+              <ClipboardList className="w-4 h-4 text-cherry-600 dark:text-emerald-400" aria-hidden="true" />
+              Batch Routing Pipeline Specifications
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
               <div className="p-3 bg-white rounded-xl border border-stone-100">

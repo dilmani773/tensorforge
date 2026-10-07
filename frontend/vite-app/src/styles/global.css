@@ -47,8 +47,10 @@ html.dark .bg-white\/10 {
 }
 
 html.dark .bg-stone-50,
+html.dark .bg-stone-50\/80,
 html.dark .bg-stone-50\/60,
 html.dark .bg-stone-50\/50,
+html.dark .bg-stone-50\/70,
 html.dark .bg-stone-50\/40,
 html.dark .bg-stone-50\/30,
 html.dark .bg-stone-50\/20,
@@ -132,7 +134,7 @@ html.dark .text-stone-950 {
 html.dark .text-cherry-700,
 html.dark .text-cherry-800,
 html.dark .text-cherry-900 {
-  color: #fda4af !important;
+  color: #6ee7b7 !important;
 }
 
 html.dark .bg-cherry-50,
@@ -141,13 +143,60 @@ html.dark .bg-cherry-50\/40,
 html.dark .bg-cherry-100,
 html.dark .bg-cherry-100\/80,
 html.dark .bg-cherry-100\/70 {
-  background-color: #4c0519 !important;
+  background-color: #12352f !important;
 }
 
 html.dark .border-cherry-200,
 html.dark .border-cherry-200\/80,
 html.dark .border-cherry-200\/70 {
+  border-color: #28745e !important;
+}
+
+html.dark .text-cherry-600 {
+  color: #6ee7b7 !important;
+}
+
+html.dark .bg-cherry-600 {
+  background-color: #168568 !important;
+}
+
+html.dark .hover\:bg-cherry-700:hover {
+  background-color: #117257 !important;
+}
+
+/* Keep rose-based alerts, urgent states, and active indicators clearly visible. */
+html.dark .bg-rose-50,
+html.dark .bg-rose-50\/70,
+html.dark .bg-rose-50\/40,
+html.dark .bg-rose-50\/20,
+html.dark .bg-rose-100,
+html.dark .bg-rose-100\/80,
+html.dark .bg-rose-100\/70 {
+  background-color: #12352f !important;
+}
+
+html.dark .border-rose-100,
+html.dark .border-rose-100\/80,
+html.dark .border-rose-200,
+html.dark .border-rose-200\/80,
+html.dark .border-rose-200\/70 {
+  border-color: #28745e !important;
+}
+
+html.dark .text-rose-700,
+html.dark .text-rose-800,
+html.dark .text-rose-900 {
+  color: #fecdd3 !important;
+}
+
+html.dark .text-rose-300 {
+  color: #fda4af !important;
+}
+
+html.dark .dark-alert {
+  background-color: #4c0519 !important;
   border-color: #9f1239 !important;
+  color: #fecdd3 !important;
 }
 
 html.dark .placeholder\:text-stone-400::placeholder {
@@ -170,8 +219,8 @@ html.dark select {
 html.dark input:focus,
 html.dark textarea:focus,
 html.dark select:focus {
-  border-color: #fb7185;
-  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18);
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18);
 }
 
 html.dark .hover\:bg-stone-50:hover,

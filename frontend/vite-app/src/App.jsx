@@ -30,6 +30,7 @@ export default function App() {
   const [apiKey, setApiKeyState] = useState(getApiKey() || '');
   const [isApiModalOpen, setIsApiModalOpen] = useState(false);
   const [isDark, setIsDark] = useState(getInitialTheme);
+  const [activeSection, setActiveSection] = useState('single-triage');
   const [healthInfo, setHealthInfo] = useState(null);
   const [metrics, setMetrics] = useState(null);
 
@@ -78,6 +79,30 @@ export default function App() {
       // The theme still works when storage is unavailable.
     }
   }, [isDark]);
+
+  useEffect(() => {
+    const sections = ['single-triage', 'batch-import', 'routing-rules'];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((first, second) => second.intersectionRatio - first.intersectionRatio)[0];
+
+        if (visible) setActiveSection(visible.target.id);
+      },
+      {
+        rootMargin: '-20% 0px -60% 0px',
+        threshold: [0.05, 0.2, 0.5],
+      },
+    );
+
+    sections.forEach((sectionId) => {
+      const section = document.getElementById(sectionId);
+      if (section) observer.observe(section);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleSaveKey = (newKey) => {
     setApiKeyState(newKey);
@@ -128,6 +153,7 @@ export default function App() {
         healthInfo={healthInfo}
         apiKey={apiKey}
         isDark={isDark}
+        activeSection={activeSection}
         onToggleTheme={() => setIsDark((current) => !current)}
         onOpenApiModal={() => setIsApiModalOpen(true)}
       />

@@ -7,10 +7,10 @@ export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOp
 
   return (
     <header className="header-surface bg-white/90 backdrop-blur-md border-b border-warm-border sticky top-0 z-40 dark:border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between py-3.5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[4.5rem] flex items-center justify-between gap-3 py-3.5">
         {/* Brand & Navigation */}
-        <div className="flex items-center gap-8">
-          <a className="flex items-center gap-3 group" href="#single-triage">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4 lg:gap-8">
+          <a className="flex shrink-0 items-center gap-2 sm:gap-3 group" href="#single-triage">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cherry-600 to-rose-400 flex items-center justify-center text-white shadow-md shadow-cherry-600/20 group-hover:scale-105 transition-transform">
               {/* Ticket Router Icon */}
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -20,7 +20,7 @@ export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOp
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-slate-900 text-lg tracking-tight dark:text-white">RideEat</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-cherry-50 text-cherry-700 border border-cherry-200/70 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-900/80">
+                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-cherry-50 text-cherry-700 border border-cherry-200/70 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-900/80">
                   Ticket Router
                 </span>
               </div>
@@ -52,7 +52,7 @@ export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOp
         </div>
 
         {/* Header Status Pills */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
           {/* System Online Pill */}
           <div
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
@@ -76,7 +76,7 @@ export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOp
 
           {/* Secure Connection Status Indicator Pill */}
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
               isHealthy
                 ? 'bg-emerald-50/80 border border-emerald-200/80 text-emerald-800 dark:bg-emerald-950/70 dark:border-emerald-900 dark:text-emerald-300'
                 : 'bg-stone-50 border border-stone-200 text-stone-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
@@ -90,7 +90,7 @@ export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOp
 
           {/* Set API Key Action Modal Trigger Button */}
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-xs font-medium text-slate-700 transition-colors shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200"
+            className="flex items-center gap-1.5 rounded-full bg-white px-2 sm:px-3 py-1.5 border border-stone-200 text-xs font-medium text-slate-700 transition-colors shadow-sm hover:bg-stone-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200"
             onClick={onOpenApiModal}
             title="Configure API Credentials"
             type="button"
@@ -98,7 +98,7 @@ export default function Header({ healthInfo, apiKey, isDark, onToggleTheme, onOp
             <svg className="w-3.5 h-3.5 text-cherry-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="font-medium">{apiKey ? 'Key Configured' : 'Set API Key'}</span>
+            <span className="hidden sm:inline font-medium">{apiKey ? 'Key Configured' : 'Set API Key'}</span>
           </button>
 
           {/* Theme Toggle */}

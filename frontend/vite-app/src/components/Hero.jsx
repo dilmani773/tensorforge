@@ -1,4 +1,5 @@
 import React from 'react';
+import { Gauge, Languages, Zap } from 'lucide-react';
 
 export default function Hero({ metrics, lastLatencyMs }) {
   // Dynamically resolve validation accuracy from real metrics.json or mock fallback
@@ -14,13 +15,13 @@ export default function Hero({ metrics, lastLatencyMs }) {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-8">
       <div className="max-w-3xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-200/60 text-cherry-700 text-xs font-semibold tracking-wide mb-4">
-          <span className="w-1.5 h-1.5 rounded-full bg-cherry-600"></span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-200/60 text-cherry-700 text-xs font-semibold tracking-wide mb-4 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-cherry-600 dark:bg-emerald-400"></span>
           Intelligent Customer Care Dispatcher
         </div>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.2]">
           Automatic Ticket Routing{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cherry-600 via-rose-600 to-rose-500">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cherry-600 via-rose-600 to-rose-500 dark:from-emerald-300 dark:via-teal-200 dark:to-emerald-300">
             Made Effortless.
           </span>
         </h1>
@@ -33,8 +34,8 @@ export default function Hero({ metrics, lastLatencyMs }) {
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Card 1: Accurate Macro Accuracy Metric */}
         <div className="bg-white p-5 rounded-2xl border border-warm-border shadow-soft flex items-center gap-4 hover:border-cherry-200 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-cherry-50 flex items-center justify-center text-cherry-600 text-xl font-bold shrink-0">
-            🎯
+          <div className="w-12 h-12 rounded-xl bg-cherry-50 flex items-center justify-center text-cherry-600 shrink-0">
+            <Gauge className="w-6 h-6" aria-hidden="true" />
           </div>
           <div>
             <div className="flex items-baseline gap-1.5">
@@ -51,13 +52,13 @@ export default function Hero({ metrics, lastLatencyMs }) {
 
         {/* Card 2: Realistic Latency Metric */}
         <div className="bg-white p-5 rounded-2xl border border-warm-border shadow-soft flex items-center gap-4 hover:border-cherry-200 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 text-xl font-bold shrink-0">
-            ⚡
+          <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 dark:bg-emerald-950/60 dark:text-emerald-300">
+            <Zap className="w-6 h-6" aria-hidden="true" />
           </div>
           <div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-extrabold text-slate-900">{latencyDisplay}</span>
-              <span className="text-xs font-semibold text-cherry-700 bg-cherry-50 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs font-semibold text-cherry-700 bg-cherry-50 px-1.5 py-0.5 rounded-full dark:bg-emerald-950/60 dark:text-emerald-300">
                 {latencyStatus}
               </span>
             </div>
@@ -69,8 +70,8 @@ export default function Hero({ metrics, lastLatencyMs }) {
 
         {/* Card 3: Multilingual Support Card */}
         <div className="bg-white p-5 rounded-2xl border border-warm-border shadow-soft flex items-center gap-4 hover:border-cherry-200 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 text-xl font-bold shrink-0">
-            🌐
+          <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+            <Languages className="w-6 h-6" aria-hidden="true" />
           </div>
           <div>
             <div className="flex items-baseline gap-1.5">

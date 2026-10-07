@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChartNoAxesCombined, Target } from 'lucide-react';
 import { TEAMS_METADATA } from '../utils/constants.js';
 
 export default function RoutingRules({ metrics, activeTeam }) {
@@ -57,7 +58,7 @@ export default function RoutingRules({ metrics, activeTeam }) {
             onClick={() => setShowBenchmarkDetails(!showBenchmarkDetails)}
             type="button"
           >
-            <span>📊</span>
+            <ChartNoAxesCombined className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{showBenchmarkDetails ? 'Hide Evaluation Scores' : 'View Validation Benchmark'}</span>
           </button>
         </div>
@@ -81,7 +82,7 @@ export default function RoutingRules({ metrics, activeTeam }) {
               <div key={team.key} className={cardClasses}>
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xl">{team.icon}</span>
+                    <team.icon className="w-5 h-5 text-cherry-600 dark:text-emerald-400" aria-hidden="true" />
                     {isActive && (
                       <span className="text-[9px] font-bold uppercase tracking-wider bg-cherry-600 text-white px-1.5 py-0.5 rounded-full">
                         Active Target
@@ -117,7 +118,8 @@ export default function RoutingRules({ metrics, activeTeam }) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  <span>🎯</span> Stratified 5-Fold Nested Cross-Validation Benchmark
+                  <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                  Stratified 5-Fold Nested Cross-Validation Benchmark
                 </h3>
                 <p className="text-xs text-warm-muted">
                   Evaluated on the official 800-ticket holdout validation partition with 3 evaluation repeats.

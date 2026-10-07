@@ -1,3 +1,18 @@
+import {
+  Ban,
+  Bike,
+  BriefcaseBusiness,
+  CarFront,
+  CreditCard,
+  Headphones,
+  Mail,
+  MessageSquare,
+  Shield,
+  Smartphone,
+  Utensils,
+  UserRound,
+} from 'lucide-react';
+
 /* Category → team mapping from the API contract (labels.py) */
 export const TEAM_BY_CATEGORY = {
   payment_refund: 'Payments & Refunds',
@@ -19,97 +34,97 @@ export const TEAMS_METADATA = [
     name: 'Payments & Refunds',
     key: 'payment_refund',
     category: 'payment_refund',
-    icon: '💳',
+    icon: CreditCard,
     desc: 'Disputed charges, wallet & payouts',
   },
   {
     name: 'Ride Operations',
     key: 'ride_trip_issue',
     category: 'ride_trip_issue',
-    icon: '🚗',
+    icon: CarFront,
     desc: 'Fares, pickups & ride cancellations',
   },
   {
     name: 'Lost & Found',
     key: 'lost_item',
     category: 'lost_item',
-    icon: '🎒',
+    icon: BriefcaseBusiness,
     desc: 'Left items in cabs & vehicle recovery',
   },
   {
     name: 'Food Operations',
     key: 'order_missing_wrong',
     category: 'order_missing_wrong',
-    icon: '🍔',
+    icon: Utensils,
     desc: 'Missing portions & dish preparation',
   },
   {
     name: 'Delivery Operations',
     key: 'delivery_delay',
     category: 'delivery_delay',
-    icon: '🛵',
+    icon: Bike,
     desc: 'Rider routing, delays & GPS dropoffs',
   },
   {
     name: 'Restaurant Quality',
     key: 'food_quality',
     category: 'food_quality',
-    icon: '🍽️',
+    icon: Utensils,
     desc: 'Food temp, spillage & packaging standards',
   },
   {
     name: 'Account Services',
     key: 'account_promo',
     category: 'account_promo',
-    icon: '👤',
+    icon: UserRound,
     desc: 'Profile updates, KYC & login verification',
   },
   {
     name: 'Trust & Safety',
     key: 'safety_conduct',
     category: 'safety_conduct',
-    icon: '🛡️',
+    icon: Shield,
     desc: 'Immediate threat & harassment triage',
   },
   {
     name: 'Tech Support',
     key: 'app_technical',
     category: 'app_technical',
-    icon: '📱',
+    icon: Smartphone,
     desc: 'App crashes, bugs & checkout errors',
   },
   {
     name: 'Front-line Support',
     key: 'general_inquiry',
     category: 'general_inquiry',
-    icon: '🎧',
+    icon: Headphones,
     desc: 'General questions & promo guidance',
   },
   {
     name: 'Auto-close / Spam Filter',
     key: 'spam_irrelevant',
     category: 'spam_irrelevant',
-    icon: '🧹',
+    icon: Ban,
     desc: 'Automated bot filters & non-actionable',
   },
 ];
 
 export const TEAM_ICONS = {
-  'Payments & Refunds': '💳',
-  'Ride Operations': '🚗',
-  'Lost & Found': '🎒',
-  'Food Operations': '🍔',
-  'Delivery Operations': '🛵',
-  'Restaurant Quality': '🍽️',
-  'Account Services': '👤',
-  'Trust & Safety': '🛡️',
-  'Tech Support': '📱',
-  'Front-line Support': '🎧',
-  'Auto-close / Spam Filter': '🧹',
+  'Payments & Refunds': CreditCard,
+  'Ride Operations': CarFront,
+  'Lost & Found': BriefcaseBusiness,
+  'Food Operations': Utensils,
+  'Delivery Operations': Bike,
+  'Restaurant Quality': Utensils,
+  'Account Services': UserRound,
+  'Trust & Safety': Shield,
+  'Tech Support': Smartphone,
+  'Front-line Support': Headphones,
+  'Auto-close / Spam Filter': Ban,
 };
 
 export function getTeamIcon(teamName) {
-  return TEAM_ICONS[teamName] || '📋';
+  return TEAM_ICONS[teamName] || BriefcaseBusiness;
 }
 
 /* Humanise a snake_case category name */
@@ -136,7 +151,7 @@ export function detectLanguage(text) {
 export const PRESETS = [
   {
     id: 'sinhala',
-    flag: '🇱🇰',
+    languageCode: 'SI',
     title: 'Delivery delay (Sinhala)',
     tag: 'Delivery',
     channel: 'chat',
@@ -145,7 +160,7 @@ export const PRESETS = [
   },
   {
     id: 'tamil',
-    flag: '🇮🇳',
+    languageCode: 'TA',
     title: 'Missing item (Tamil)',
     tag: 'Food Ops',
     channel: 'chat',
@@ -154,7 +169,7 @@ export const PRESETS = [
   },
   {
     id: 'singlish',
-    flag: '🔤',
+    languageCode: 'MIX',
     title: 'Payment query (Singlish)',
     tag: 'Payments',
     channel: 'email',
@@ -163,7 +178,7 @@ export const PRESETS = [
   },
   {
     id: 'english',
-    flag: '🇬🇧',
+    languageCode: 'EN',
     title: 'Urgent safety (English)',
     tag: 'Trust & Safety',
     channel: 'call_transcript',
@@ -173,7 +188,7 @@ export const PRESETS = [
 ];
 
 export const CHANNELS = [
-  { id: 'chat', label: 'In-App Chat', icon: '💬' },
-  { id: 'email', label: 'Email', icon: '✉️' },
-  { id: 'call_transcript', label: 'Call Note', icon: '🎧' },
+  { id: 'chat', label: 'In-App Chat', icon: MessageSquare },
+  { id: 'email', label: 'Email', icon: Mail },
+  { id: 'call_transcript', label: 'Call Note', icon: Headphones },
 ];

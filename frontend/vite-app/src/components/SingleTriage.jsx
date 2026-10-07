@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AlertTriangle, ClipboardList, Languages, ShieldAlert } from 'lucide-react';
 import { CHANNELS, PRESETS, getTeamIcon, detectLanguage } from '../utils/constants.js';
 
 export default function SingleTriage({
@@ -49,7 +50,7 @@ export default function SingleTriage({
   const isUrgent = !!result?.is_urgent;
   const needsHumanReview = !!result?.needs_human_review;
   const detectedLang = detectLanguage(message);
-  const teamIcon = result ? getTeamIcon(result.team) : '📋';
+  const TeamIcon = result ? getTeamIcon(result.team) : ClipboardList;
 
   const routingActionText = result
     ? isUrgent
@@ -87,6 +88,7 @@ export default function SingleTriage({
               <div className="grid grid-cols-3 gap-2">
                 {CHANNELS.map((ch) => {
                   const isActive = channel === ch.id;
+                  const ChannelIcon = ch.icon;
                   return (
                     <button
                       key={ch.id}
@@ -98,7 +100,7 @@ export default function SingleTriage({
                       }`}
                       onClick={() => onChannelChange(ch.id)}
                     >
-                      <span>{ch.icon}</span> {ch.label}
+                      <ChannelIcon className="w-3.5 h-3.5" aria-hidden="true" /> {ch.label}
                     </button>
                   );
                 })}
@@ -167,7 +169,13 @@ export default function SingleTriage({
                     disabled={loading}
                   >
                     <div className="flex items-center justify-between font-semibold text-slate-800 group-hover:text-cherry-800">
-                      <span>{p.flag} {p.title}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="inline-flex h-6 min-w-12 shrink-0 items-center justify-center gap-1 rounded-md border border-stone-200 bg-stone-100 px-1.5 text-[10px] font-bold tracking-wide text-stone-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100">
+                          <Languages className="h-3 w-3" aria-hidden="true" />
+                          {p.languageCode}
+                        </span>
+                        {p.title}
+                      </span>
                       <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded-md font-medium">
                         {p.tag}
                       </span>
@@ -180,8 +188,9 @@ export default function SingleTriage({
 
             {/* Error Message */}
             {error && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
-                <span className="font-bold">⚠️ Error:</span> {error}
+              <div className="dark-alert p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2 dark:bg-rose-950/80 dark:border-rose-800 dark:text-rose-200">
+                <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span><strong>Error:</strong> {error}</span>
               </div>
             )}
 
@@ -314,7 +323,7 @@ export default function SingleTriage({
                     </div>
                     <div className="mt-2 p-4 rounded-xl bg-rose-50/40 border border-rose-100 flex items-center gap-3.5">
                       <div className="w-12 h-12 rounded-xl bg-white border border-rose-200 flex items-center justify-center text-2xl shadow-sm shrink-0">
-                        {teamIcon}
+                        <TeamIcon className="w-6 h-6 text-cherry-600 dark:text-emerald-400" aria-hidden="true" />
                       </div>
                       <div className="flex-grow">
                         <h3 className="text-lg font-extrabold text-slate-900 leading-snug">
@@ -379,7 +388,9 @@ export default function SingleTriage({
                             needsHumanReview ? 'font-bold text-amber-800' : 'font-semibold text-slate-800'
                           }
                         >
-                          {needsHumanReview ? '⚠️ Flagged for Review' : 'Auto-routed'}
+                          {needsHumanReview ? (
+                            <><AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" /> Flagged for Review</>
+                          ) : 'Auto-routed'}
                         </span>
                       </div>
                     </div>
@@ -444,7 +455,7 @@ export default function SingleTriage({
 
           {/* Safety & Trust Priority Notice */}
           <div className="p-4 rounded-xl bg-white border border-warm-border text-xs text-warm-muted flex items-start gap-3">
-            <span className="text-lg">🛡️</span>
+            <ShieldAlert className="w-5 h-5 shrink-0 text-rose-600 dark:text-rose-400" aria-hidden="true" />
             <div>
               <p className="font-semibold text-slate-800">Safety &amp; Urgency Protocol</p>
               <p className="text-[11px] mt-0.5 leading-relaxed">

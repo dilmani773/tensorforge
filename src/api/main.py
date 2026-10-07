@@ -157,7 +157,8 @@ def validation_failed(details):
 # ---------------------------------------------------------------- routes
 # ---------------------------------------------------------------- demo dashboard (public page, no key inside)
 FRONTEND_DIR = config.BASE_DIR / "frontend"
-FRONTEND_PAGE = FRONTEND_DIR / "index.html"
+FRONTEND_BUILD_DIR = FRONTEND_DIR / "vite-app" / "dist"
+FRONTEND_PAGE = FRONTEND_BUILD_DIR / "index.html"
 # The page is served from this same server, so its API calls must go to this origin
 # (frontend/services/api/client.js reads these globals first).
 SAME_ORIGIN = ('<script>window.__TENSORFORGE_API_BASE_URL__ = window.location.origin;'
@@ -178,7 +179,7 @@ async def demo_redirect():
 @app.get("/demo/")
 async def demo_page():
     if not FRONTEND_PAGE.exists():
-        raise ApiError(404, "not_found", "Route not found.")
+        raise ApiError(404, "not_found", "The Vite frontend build is not available.")
     html = FRONTEND_PAGE.read_text(encoding="utf-8")
     html = html.replace("</head>", SAME_ORIGIN + "</head>", 1) if "</head>" in html else SAME_ORIGIN + html
     return HTMLResponse(html)
@@ -186,6 +187,8 @@ async def demo_page():
 
 if (FRONTEND_DIR / "services").is_dir():
     app.mount("/demo/services", StaticFiles(directory=FRONTEND_DIR / "services"), name="demo-services")
+if FRONTEND_BUILD_DIR.is_dir():
+    app.mount("/demo", StaticFiles(directory=FRONTEND_BUILD_DIR), name="demo-frontend")
 
 
 @app.get("/demo/metrics")

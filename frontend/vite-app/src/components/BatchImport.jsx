@@ -237,7 +237,7 @@ export default function BatchImport() {
 
         {/* Dropzone Card */}
         <div
-          className={`mt-6 border-2 border-dashed rounded-2xl p-8 sm:p-10 text-center transition-all cursor-pointer group ${
+          className={`mt-5 border-2 border-dashed rounded-2xl p-5 sm:p-6 text-center transition-all cursor-pointer group ${
             dragOver
               ? 'border-cherry-500 bg-rose-50/70 scale-[1.01]'
               : 'border-rose-200 hover:border-cherry-400 bg-rose-50/20 hover:bg-rose-50/50'
@@ -247,12 +247,12 @@ export default function BatchImport() {
           onDrop={handleDrop}
           onClick={() => !processing && fileInputRef.current?.click()}
         >
-          <div className="w-14 h-14 rounded-2xl bg-cherry-50 text-cherry-600 mx-auto flex items-center justify-center group-hover:scale-110 group-hover:bg-cherry-100 transition-all shadow-sm">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <div className="w-12 h-12 rounded-2xl bg-cherry-50 text-cherry-600 mx-auto flex items-center justify-center group-hover:scale-110 group-hover:bg-cherry-100 transition-all shadow-sm">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <p className="mt-3.5 text-sm font-semibold text-slate-800">
+          <p className="mt-2.5 text-sm font-semibold text-slate-800">
             <span className="text-cherry-700 underline font-bold">Browse files</span> or drag and drop your ticket spreadsheet here
           </p>
           <p className="text-xs text-warm-muted mt-1">Accepts UTF-8 .CSV datasets with <code>channel</code> and <code>text</code> • Supports up to 5,000 inquiries per run</p>

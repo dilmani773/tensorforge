@@ -284,6 +284,8 @@ def test_worker_processes_chunks_and_persists_completion(client, monkeypatch):
 
     monkeypatch.setattr(config, "JOB_CHUNK_SIZE", 2)
     store = client.main.S.store
+    claim = store.claim_next
+    monkeypatch.setattr(store, "claim_next", lambda: None)  # keep the live background worker away from this job
     tickets = [T(i) for i in range(5)]
     row, _ = store.submit(tickets, "test-model")
     seen = []
@@ -293,7 +295,7 @@ def test_worker_processes_chunks_and_persists_completion(client, monkeypatch):
             seen.append([ticket["ticket_id"] for ticket in chunk])
             return [{"ticket_id": ticket["ticket_id"]} for ticket in chunk]
 
-    claimed_job_id, claimed_tickets = store.claim_next()
+    claimed_job_id, claimed_tickets = claim()
     assert claimed_job_id == row["job_id"]
     Worker(store, lambda: DeterministicPredictor())._run_job(claimed_job_id, claimed_tickets)
 
@@ -381,7 +383,17 @@ def test_demo_page_and_assets(client):
     r = client.get("/demo", follow_redirects=False)
     assert r.status_code == 307 and r.headers["location"] == "/demo/"
     page = client.get("/demo/")
-    assert page.status_code == 200 and "__TENSORFORGE_API_BASE_URL__" in page.text
+    if client.main.FRONTEND_PAGE.exists():  # frontend built (deploy/build-frontend.sh)
+        assert page.status_code == 200 and "__TENSORFORGE_API_BASE_URL__" in page.text
+    else:  # not built yet: a clean JSON 404, never a crash
+        assert_error(page, 404)
     js = client.get("/demo/services/index.js")
     assert js.status_code == 200 and "javascript" in js.headers["content-type"]
     assert_error(client.get("/demo/services/nope.js"), 404)
+
+
+def test_demo_metrics_not_shadowed_by_static_mount(client):
+    """The /demo static mount must not swallow GET /demo/metrics (the frontend reads real scores there)."""
+    r = client.get("/demo/metrics")
+    assert r.status_code == 200, r.text
+    assert "ensemble_nested_cv_estimate" in r.json() or "validation" in r.json()

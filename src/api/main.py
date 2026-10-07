@@ -185,10 +185,6 @@ async def demo_page():
     return HTMLResponse(html)
 
 
-if (FRONTEND_DIR / "services").is_dir():
-    app.mount("/demo/services", StaticFiles(directory=FRONTEND_DIR / "services"), name="demo-services")
-if FRONTEND_BUILD_DIR.is_dir():
-    app.mount("/demo", StaticFiles(directory=FRONTEND_BUILD_DIR), name="demo-frontend")
 
 
 @app.get("/demo/metrics")
@@ -310,6 +306,15 @@ async def job_results(job_id: str, request: Request):
     nxt = offset + limit if offset + limit < total else None
     return {"job_id": job_id, "status": "succeeded", "total": total, "offset": offset, "limit": limit,
             "next_offset": nxt, "model_version": row["model_version"], "predictions": page}
+
+
+# ---------------------------------------------------------------- static files (registered LAST)
+# Mounts match every path under their prefix, so they must come after all routes; otherwise the
+# /demo mount would swallow GET /demo/metrics and the frontend would never get the real scores.
+if (FRONTEND_DIR / "services").is_dir():
+    app.mount("/demo/services", StaticFiles(directory=FRONTEND_DIR / "services"), name="demo-services")
+if FRONTEND_BUILD_DIR.is_dir():
+    app.mount("/demo", StaticFiles(directory=FRONTEND_BUILD_DIR), name="demo-frontend")
 
 
 # ---------------------------------------------------------------- CORS (browser frontends on other origins)

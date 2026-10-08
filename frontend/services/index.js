@@ -7,6 +7,25 @@ function usesMockApi() {
 
 export { getApiKey, setApiKey, resolveApiBaseUrl, getApiMode, buildHeaders };
 
+// Checks a key with the server without running the model. The server checks the key before
+// anything else: a wrong key gets 401; a right key gets 404 for this job id, which cannot exist.
+// fetch is used directly because apiRequest/buildHeaders would send the stored key instead.
+// Returns 'valid' | 'invalid' | 'unknown' (server unreachable or unexpected answer).
+export async function verifyApiKey(key) {
+  if (!key) return 'invalid';
+  if (usesMockApi()) return 'valid';
+  try {
+    const res = await fetch(`${resolveApiBaseUrl()}/batch/jobs/__key_check__`, {
+      headers: { 'X-API-Key': key },
+    });
+    if (res.status === 401) return 'invalid';
+    if (res.status === 404) return 'valid';
+    return 'unknown';
+  } catch (error) {
+    return 'unknown';
+  }
+}
+
 export async function healthCheck() {
   if (usesMockApi()) {
     return mockApi.healthCheck();

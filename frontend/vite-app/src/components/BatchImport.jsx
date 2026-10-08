@@ -4,7 +4,7 @@ import { parseCSV, predictionsToCSV, downloadCSV, generateSampleCSV } from '../u
 import { detectLanguage } from '../utils/constants.js';
 import { predictBatch, createBatchJob, getBatchJob, getBatchResults } from '../../../services/index.js';
 
-export default function BatchImport() {
+export default function BatchImport({ onUnauthorized } = {}) {
   const [dragOver, setDragOver] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [progressInfo, setProgressInfo] = useState({ progress: 0, text: '', active: false });
@@ -169,7 +169,10 @@ export default function BatchImport() {
       });
     } catch (err) {
       let msg = err.message || 'Failed to process batch CSV';
-      if (err.status === 422) {
+      if (err.status === 401) {
+        if (onUnauthorized) onUnauthorized();
+        msg = 'Unauthorized: the API key is missing or wrong. Click "Set API Key" in the top bar.';
+      } else if (err.status === 422) {
         msg += ' Please verify each row has a valid channel (chat, email, call_transcript) and non-empty text.';
       }
       setError(msg);

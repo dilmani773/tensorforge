@@ -1,7 +1,21 @@
 import React from 'react';
 import ThemeToggle from './ThemeToggle.jsx';
 
-export default function Header({ healthInfo, apiKey, isDark, activeSection, onToggleTheme, onOpenApiModal }) {
+const KEY_PILL = {
+  none: { label: 'No API key', dot: 'bg-stone-400', tone: 'neutral' },
+  checking: { label: 'Checking key…', dot: 'bg-amber-400 animate-pulse', tone: 'neutral' },
+  valid: { label: 'Key verified', dot: 'bg-emerald-500', tone: 'good' },
+  invalid: { label: 'Wrong API key', dot: 'bg-red-500', tone: 'bad' },
+  unknown: { label: "Can't check key", dot: 'bg-stone-400', tone: 'neutral' },
+};
+
+const PILL_TONE = {
+  good: 'bg-emerald-50/80 border border-emerald-200/80 text-emerald-800 dark:bg-emerald-950/70 dark:border-emerald-900 dark:text-emerald-300',
+  bad: 'bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/60 dark:border-red-800 dark:text-red-300',
+  neutral: 'bg-stone-50 border border-stone-200 text-stone-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300',
+};
+
+export default function Header({ healthInfo, apiKey, keyStatus = 'none', isDark, activeSection, onToggleTheme, onOpenApiModal }) {
   const isHealthy = healthInfo?.status === 'ok' || healthInfo?.status === 'ready';
   const isLoading = healthInfo?.status === 'loading';
   const navItems = [
@@ -81,18 +95,13 @@ export default function Header({ healthInfo, apiKey, isDark, activeSection, onTo
             <span className="sm:hidden">{isHealthy ? 'Online' : 'Offline'}</span>
           </div>
 
-          {/* Secure Connection Status Indicator Pill */}
+          {/* API key status: only "Key verified" after the server accepted the key */}
           <div
-            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
-              isHealthy
-                ? 'bg-emerald-50/80 border border-emerald-200/80 text-emerald-800 dark:bg-emerald-950/70 dark:border-emerald-900 dark:text-emerald-300'
-                : 'bg-stone-50 border border-stone-200 text-stone-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
-            }`}
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${PILL_TONE[(KEY_PILL[keyStatus] || KEY_PILL.none).tone]}`}
+            title="Checked against the server, not just whether a key was typed"
           >
-            <span className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-emerald-500' : 'bg-stone-400'}`}></span>
-            <span className="font-medium">
-              {apiKey ? 'Authenticated' : isHealthy ? 'API Connected' : 'Connecting'}
-            </span>
+            <span className={`w-2 h-2 rounded-full ${(KEY_PILL[keyStatus] || KEY_PILL.none).dot}`}></span>
+            <span className="font-medium">{(KEY_PILL[keyStatus] || KEY_PILL.none).label}</span>
           </div>
 
           {/* Set API Key Action Modal Trigger Button */}
@@ -105,7 +114,7 @@ export default function Header({ healthInfo, apiKey, isDark, activeSection, onTo
             <svg className="w-3.5 h-3.5 text-cherry-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="hidden sm:inline font-medium">{apiKey ? 'Key Configured' : 'Set API Key'}</span>
+            <span className="hidden sm:inline font-medium">{!apiKey ? 'Set API Key' : keyStatus === 'invalid' ? 'Fix API Key' : 'Change Key'}</span>
           </button>
 
           {/* Theme Toggle */}

@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
-export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
+const STATUS_TEXT = {
+  none: 'No key set. Requests will be rejected until you add one.',
+  checking: 'Checking the key with the server…',
+  valid: 'Key verified by the server.',
+  invalid: 'The server rejected this key. Check it and try again.',
+  unknown: 'Could not reach the server to check the key.',
+};
+
+export default function ApiKeyModal({ isOpen, onClose, apiKey, keyStatus = 'none', onSaveKey }) {
   const [keyInput, setKeyInput] = useState(apiKey || '');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -75,11 +83,9 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
           </div>
 
           <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 text-[11px] text-warm-muted flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${apiKey ? 'bg-emerald-500' : 'bg-stone-300'}`}></span>
+            <span className={`w-2 h-2 rounded-full ${keyStatus === 'valid' ? 'bg-emerald-500' : keyStatus === 'invalid' ? 'bg-rose-500' : 'bg-stone-300'}`}></span>
             <span>
-              {apiKey
-                ? 'Status: Active session bearer credentials configured.'
-                : 'Status: No custom API key configured (using default server auth).'}
+              {STATUS_TEXT[keyStatus] || STATUS_TEXT.none}
             </span>
           </div>
         </div>

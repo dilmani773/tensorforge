@@ -13,6 +13,7 @@ import {
   getDemoMetrics,
   getApiKey,
   setApiKey,
+  verifyApiKey,
 } from '../../services/index.js';
 
 function getInitialTheme() {
@@ -28,6 +29,8 @@ function getInitialTheme() {
 
 export default function App() {
   const [apiKey, setApiKeyState] = useState(getApiKey() || '');
+  // 'none' | 'checking' | 'valid' | 'invalid' | 'unknown'
+  const [keyStatus, setKeyStatus] = useState(getApiKey() ? 'checking' : 'none');
   const [isApiModalOpen, setIsApiModalOpen] = useState(false);
   const [isDark, setIsDark] = useState(getInitialTheme);
   const [activeSection, setActiveSection] = useState('single-triage');
@@ -134,6 +137,26 @@ export default function App() {
     return () => observer.disconnect();
   }, []);
 
+  const serverUp = healthInfo?.status === 'ok' || healthInfo?.status === 'ready';
+
+  // Ask the server whether the key is real whenever the key changes or the server comes up.
+  useEffect(() => {
+    if (!apiKey) {
+      setKeyStatus('none');
+      return undefined;
+    }
+    let cancelled = false;
+    setKeyStatus('checking');
+    verifyApiKey(apiKey).then((result) => {
+      if (!cancelled) setKeyStatus(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [apiKey, serverUp]);
+
+  const markKeyInvalid = useCallback(() => setKeyStatus('invalid'), []);
+
   const handleSaveKey = (newKey) => {
     setApiKeyState(newKey);
     setApiKey(newKey);
@@ -167,6 +190,7 @@ export default function App() {
     } catch (err) {
       let msg = err.message || 'Inference request failed.';
       if (err.status === 401) {
+        markKeyInvalid();
         msg = 'Unauthorized: Invalid or missing API key. Please click "Set API Key" in the top bar.';
       } else if (err.status === 422) {
         msg = 'Validation Error: Check that the channel and text fields are properly formatted.';
@@ -182,6 +206,7 @@ export default function App() {
       <Header
         healthInfo={healthInfo}
         apiKey={apiKey}
+        keyStatus={keyStatus}
         isDark={isDark}
         activeSection={activeSection}
         onToggleTheme={() => setIsDark((current) => !current)}
@@ -192,6 +217,7 @@ export default function App() {
         isOpen={isApiModalOpen}
         onClose={() => setIsApiModalOpen(false)}
         apiKey={apiKey}
+        keyStatus={keyStatus}
         onSaveKey={handleSaveKey}
       />
 
@@ -211,7 +237,7 @@ export default function App() {
           error={singleError}
         />
 
-        <BatchImport />
+        <BatchImport onUnauthorized={markKeyInvalid} />
 
         <RoutingRules metrics={metrics} activeTeam={singleResult?.team} />
       </main>

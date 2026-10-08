@@ -397,3 +397,11 @@ def test_demo_metrics_not_shadowed_by_static_mount(client):
     r = client.get("/demo/metrics")
     assert r.status_code == 200, r.text
     assert "ensemble_nested_cv_estimate" in r.json() or "validation" in r.json()
+
+def test_key_check_contract_used_by_frontend(client):
+    """The frontend verifies a key with GET /batch/jobs/__key_check__: 401 means wrong key, 404 means accepted."""
+    assert_error(client.get("/batch/jobs/__key_check__", headers={"X-API-Key": "fake"}), 401)
+    assert_error(client.get("/batch/jobs/__key_check__"), 401)
+    r = client.get("/batch/jobs/__key_check__", headers={"X-API-Key": KEY})
+    assert_error(r, 404)
+    assert r.json()["error"]["code"] == "job_not_found"

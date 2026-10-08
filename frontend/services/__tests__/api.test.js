@@ -11,6 +11,7 @@ import {
   pollBatchJob,
   setApiKey,
   getApiKey,
+  verifyApiKey,
 } from '../index.js';
 import { ApiError } from '../api/errors.js';
 
@@ -174,3 +175,30 @@ test('mock mode returns mock payloads', async () => {
 });
 
 export {};
+
+
+test('verifyApiKey asks the server and sends the key being tested, not the stored one', async () => {
+  installStorage();
+  setApiKey('stored-key');
+  const seen = [];
+  const answer = (status) => async (url, options = {}) => {
+    seen.push({ url, key: options.headers?.['X-API-Key'] });
+    return new Response(JSON.stringify({ error: { code: 'x', message: 'x' } }), {
+      status, headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  globalThis.fetch = answer(401);
+  assert.equal(await verifyApiKey('fake-key'), 'invalid');
+  globalThis.fetch = answer(404);
+  assert.equal(await verifyApiKey('real-key'), 'valid');
+  globalThis.fetch = answer(503);
+  assert.equal(await verifyApiKey('real-key'), 'unknown');
+  globalThis.fetch = async () => { throw new TypeError('Failed to fetch'); };
+  assert.equal(await verifyApiKey('real-key'), 'unknown');
+  assert.equal(await verifyApiKey(''), 'invalid');
+
+  assert.equal(seen[0].url, 'http://localhost:8000/batch/jobs/__key_check__');
+  assert.equal(seen[0].key, 'fake-key');
+  assert.equal(seen[1].key, 'real-key');
+});

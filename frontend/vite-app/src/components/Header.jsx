@@ -39,7 +39,7 @@ export default function Header({ healthInfo, apiKey, keyStatus = 'none', isDark,
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-slate-900 text-lg tracking-tight dark:text-white">RideEat</span>
-                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-cherry-50 text-cherry-700 border border-cherry-200/70 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/80">
+                <span className="hidden xl:inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-cherry-50 text-cherry-700 border border-cherry-200/70 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/80">
                   Ticket Router
                 </span>
               </div>
@@ -48,13 +48,13 @@ export default function Header({ healthInfo, apiKey, keyStatus = 'none', isDark,
           </a>
 
           {/* Simple Nav Links */}
-          <nav className="hidden md:flex items-center gap-1 text-sm font-medium" aria-label="Application sections">
+          <nav className="hidden lg:flex items-center gap-1 text-sm font-medium" aria-label="Application sections">
             {navItems.map((item) => {
               const isActive = activeSection === item.id;
               return (
                 <a
                   key={item.id}
-                  className={`relative px-3 py-1.5 rounded-lg font-semibold transition-colors ${
+                  className={`relative whitespace-nowrap px-3 py-1.5 rounded-lg font-semibold transition-colors ${
                     isActive
                       ? 'text-cherry-700 bg-cherry-50/80 dark:text-emerald-300 dark:bg-emerald-950/40'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-stone-100/60 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800'
@@ -89,15 +89,15 @@ export default function Header({ healthInfo, apiKey, keyStatus = 'none', isDark,
                 isHealthy ? 'bg-emerald-500' : isLoading ? 'bg-amber-500' : 'bg-rose-500'
               }`}
             ></span>
-            <span className="hidden sm:inline">
+            <span className="hidden xl:inline whitespace-nowrap">
               {isHealthy ? 'System Online & Ready' : isLoading ? 'Model Loading...' : 'Service Offline'}
             </span>
-            <span className="sm:hidden">{isHealthy ? 'Online' : 'Offline'}</span>
+            <span className="xl:hidden whitespace-nowrap">{isHealthy ? 'Online' : 'Offline'}</span>
           </div>
 
           {/* API key status: only "Key verified" after the server accepted the key */}
           <div
-            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${PILL_TONE[(KEY_PILL[keyStatus] || KEY_PILL.none).tone]}`}
+            className={`hidden md:flex lg:hidden xl:flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium ${PILL_TONE[(KEY_PILL[keyStatus] || KEY_PILL.none).tone]}`}
             title="Checked against the server, not just whether a key was typed"
           >
             <span className={`w-2 h-2 rounded-full ${(KEY_PILL[keyStatus] || KEY_PILL.none).dot}`}></span>
@@ -114,7 +114,7 @@ export default function Header({ healthInfo, apiKey, keyStatus = 'none', isDark,
             <svg className="w-3.5 h-3.5 text-cherry-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="hidden sm:inline font-medium">{!apiKey ? 'Set API Key' : keyStatus === 'invalid' ? 'Fix API Key' : 'Change Key'}</span>
+            <span className="hidden sm:inline whitespace-nowrap font-medium">{!apiKey ? 'Set API Key' : keyStatus === 'invalid' ? 'Fix API Key' : 'Change Key'}</span>
           </button>
 
           {/* Theme Toggle */}

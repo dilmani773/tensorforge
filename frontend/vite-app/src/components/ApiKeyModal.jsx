@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const STATUS_TEXT = {
   none: 'No key set. Requests will be rejected until you add one.',
@@ -8,26 +8,66 @@ const STATUS_TEXT = {
   unknown: 'Could not reach the server to check the key.',
 };
 
-export default function ApiKeyModal({ isOpen, onClose, apiKey, keyStatus = 'none', onSaveKey }) {
+export default function ApiKeyModal({ isOpen, onClose, apiKey, keyStatus = 'none', locked = false, onSaveKey }) {
   const [keyInput, setKeyInput] = useState(apiKey || '');
   const [showPassword, setShowPassword] = useState(false);
+  const [awaiting, setAwaiting] = useState(false); // waiting for the server's verdict on a submitted key
+  const [success, setSuccess] = useState(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose; // the parent passes a new function each render; keep the timer stable
 
   useEffect(() => {
     setKeyInput(apiKey || '');
   }, [apiKey, isOpen]);
 
+  // Close only after the server has accepted the key, with a short confirmation first.
+  useEffect(() => {
+    if (!awaiting) return undefined;
+    if (keyStatus === 'valid') {
+      setSuccess(true);
+      const timer = setTimeout(() => {
+        setSuccess(false);
+        setAwaiting(false);
+        onCloseRef.current();
+      }, 1400);
+      return () => clearTimeout(timer);
+    }
+    if (keyStatus === 'invalid' || keyStatus === 'unknown' || keyStatus === 'none') setAwaiting(false);
+    return undefined;
+  }, [keyStatus, awaiting]);
+
   if (!isOpen) return null;
 
+  const checking = awaiting && keyStatus === 'checking';
+
   const handleSave = () => {
-    onSaveKey(keyInput.trim());
-    onClose();
+    const value = keyInput.trim();
+    if (!value) return;
+    onSaveKey(value);
+    setAwaiting(true);
   };
 
   const handleClearKey = () => {
     setKeyInput('');
+    setAwaiting(false);
     onSaveKey('');
-    onClose();
   };
+
+  if (success) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-warm-border dark:border-slate-700 shadow-soft-lg w-full max-w-sm mx-4 p-8 flex flex-col items-center text-center" role="status" aria-live="polite">
+          <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 dark:text-emerald-300 mb-4">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">You are authenticated</h3>
+          <p className="mt-1.5 text-sm text-warm-muted dark:text-slate-400">The server accepted your API key. Opening the dashboard…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
@@ -39,15 +79,17 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, keyStatus = 'none
                 <path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h3 className="text-base font-bold text-slate-900">Configure API Key</h3>
+            <h3 className="text-base font-bold text-slate-900">{locked ? 'Enter your API key to continue' : 'Configure API Key'}</h3>
           </div>
-          <button
-            className="text-stone-400 hover:text-stone-700 text-lg leading-none p-1 cursor-pointer"
-            onClick={onClose}
-            type="button"
-          >
-            ✕
-          </button>
+          {!locked && (
+            <button
+              className="text-stone-400 hover:text-stone-700 text-lg leading-none p-1 cursor-pointer"
+              onClick={onClose}
+              type="button"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         <div className="py-4 space-y-4">
@@ -66,6 +108,7 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, keyStatus = 'none
                 type={showPassword ? 'text' : 'password'}
                 value={keyInput}
                 onChange={(e) => setKeyInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
                 autoFocus
               />
               <button
@@ -103,19 +146,22 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, keyStatus = 'none
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-stone-100 transition-colors cursor-pointer"
-              onClick={onClose}
-              type="button"
-            >
-              Cancel
-            </button>
+            {!locked && (
+              <button
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-stone-100 transition-colors cursor-pointer"
+                onClick={onClose}
+                type="button"
+              >
+                Cancel
+              </button>
+            )}
             <button
               className="px-4 py-2 rounded-xl bg-cherry-600 hover:bg-cherry-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
               onClick={handleSave}
+              disabled={checking}
               type="button"
             >
-              Save Credentials
+              {checking ? 'Checking key…' : 'Verify & continue'}
             </button>
           </div>
         </div>

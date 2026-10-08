@@ -31,7 +31,10 @@ export default function App() {
   const [apiKey, setApiKeyState] = useState(getApiKey() || '');
   // 'none' | 'checking' | 'valid' | 'invalid' | 'unknown'
   const [keyStatus, setKeyStatus] = useState(getApiKey() ? 'checking' : 'none');
-  const [isApiModalOpen, setIsApiModalOpen] = useState(false);
+  const [isApiModalOpen, setIsApiModalOpen] = useState(!getApiKey());
+  const [verifyTick, setVerifyTick] = useState(0);
+  // The dashboard stays faded and inert until the server has accepted the key.
+  const isLocked = keyStatus !== 'valid';
   const [isDark, setIsDark] = useState(getInitialTheme);
   const [activeSection, setActiveSection] = useState('single-triage');
   const [healthInfo, setHealthInfo] = useState(null);
@@ -153,11 +156,18 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [apiKey, serverUp]);
+  }, [apiKey, serverUp, verifyTick]);
+
+  // Ask for the key whenever there is none, or the server rejected it.
+  useEffect(() => {
+    if (keyStatus === 'none' || keyStatus === 'invalid' || keyStatus === 'unknown') setIsApiModalOpen(true);
+  }, [keyStatus]);
 
   const markKeyInvalid = useCallback(() => setKeyStatus('invalid'), []);
 
   const handleSaveKey = (newKey) => {
+    setKeyStatus(newKey ? 'checking' : 'none');
+    setVerifyTick((tick) => tick + 1); // re-check even if the same key is submitted again
     setApiKeyState(newKey);
     setApiKey(newKey);
     checkHealth();
@@ -218,9 +228,17 @@ export default function App() {
         onClose={() => setIsApiModalOpen(false)}
         apiKey={apiKey}
         keyStatus={keyStatus}
+        locked={isLocked}
         onSaveKey={handleSaveKey}
       />
 
+      <div
+        className={`flex-grow flex flex-col transition duration-500 ${
+          isLocked ? 'pointer-events-none select-none blur-[3px] opacity-40' : ''
+        }`}
+        aria-hidden={isLocked || undefined}
+        inert={isLocked ? '' : undefined}
+      >
       <main className="flex-grow soft-dot-grid pb-20">
         <Hero metrics={metrics} lastLatencyMs={lastLatencyMs} />
 
@@ -243,6 +261,7 @@ export default function App() {
       </main>
 
       <Footer />
+      </div>
     </div>
   );
 }
